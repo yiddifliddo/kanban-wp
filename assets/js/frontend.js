@@ -203,7 +203,12 @@
         let html = '<div class="cwds-column" data-column-id="' + col.id + '">';
         html += '<div class="cwds-column-header">';
         html += '<h3>' + escHtml(col.title) + '</h3>';
+        html += '<div class="cwds-column-header-right">';
         html += '<span class="cwds-column-count">' + cards.length + '</span>';
+        if (boardData.auth.type === 'admin') {
+            html += '<button class="cwds-column-menu-btn" onclick="event.stopPropagation();cwdsKanbanApp.showColumnMenu(this,' + col.id + ')" title="List actions">' + ICONS.more + '</button>';
+        }
+        html += '</div>';
         html += '</div>';
 
         html += '<div class="cwds-column-cards" data-column-id="' + col.id + '">';
@@ -418,6 +423,91 @@
         const wrap = form.parentElement;
         form.remove();
         wrap.querySelector('.cwds-add-list-btn').style.display = '';
+    }
+
+    // ═══════════════════════════════════════════════
+    // COLUMN MENU
+    // ═══════════════════════════════════════════════
+
+    function showColumnMenu(btn, columnId) {
+        // Close any existing column menus
+        document.querySelectorAll('.cwds-column-menu').forEach(m => m.remove());
+
+        const col = boardData.columns.find(c => parseInt(c.id) === columnId);
+        const cardCount = col && col.cards ? col.cards.length : 0;
+
+        let html = '<div class="cwds-column-menu">';
+        html += '<div class="cwds-column-menu-title">List actions</div>';
+        html += '<button class="cwds-column-menu-close" onclick="this.closest(\'.cwds-column-menu\').remove()">' + ICONS.x + '</button>';
+
+        html += '<div class="cwds-column-menu-item" onclick="cwdsKanbanApp.showAddCard(this.closest(\'.cwds-column\').querySelector(\'.cwds-add-card-btn\'),' + columnId + ');this.closest(\'.cwds-column-menu\').remove()">';
+        html += 'Add card</div>';
+
+        if (cardCount > 0) {
+            html += '<div class="cwds-column-menu-item cwds-column-menu-danger" onclick="cwdsKanbanApp.archiveAllCards(' + columnId + ')">';
+            html += 'Archive all cards in this list</div>';
+        }
+
+        html += '<hr class="cwds-column-menu-sep">';
+
+        html += '<div class="cwds-column-menu-item cwds-column-menu-danger" onclick="cwdsKanbanApp.deleteColumn(' + columnId + ')">';
+        html += 'Archive this list</div>';
+
+        html += '</div>';
+
+        btn.insertAdjacentHTML('afterend', html);
+
+        // Close on outside click
+        setTimeout(function() {
+            document.addEventListener('click', function closeColMenu(e) {
+                if (!e.target.closest('.cwds-column-menu') && !e.target.closest('.cwds-column-menu-btn')) {
+                    document.querySelectorAll('.cwds-column-menu').forEach(m => m.remove());
+                    document.removeEventListener('click', closeColMenu);
+                }
+            });
+        }, 10);
+    }
+
+    async function deleteColumn(columnId) {
+        const col = boardData.columns.find(c => parseInt(c.id) === columnId);
+        const cardCount = col && col.cards ? col.cards.length : 0;
+        const msg = cardCount > 0
+            ? 'Delete this list and its ' + cardCount + ' card(s)? This cannot be undone.'
+            : 'Delete this empty list?';
+        if (!confirm(msg)) return;
+
+        try {
+            await apiDelete('columns/' + columnId);
+            // Remove from boardData and refresh
+            boardData.columns = boardData.columns.filter(c => parseInt(c.id) !== columnId);
+            const app = document.getElementById('cwds-kanban-app');
+            renderBoard(app);
+        } catch (err) {
+            console.error('Delete column failed:', err);
+            if (err.message && err.message.includes('403')) {
+                alert('Only admins can delete lists.');
+            }
+        }
+    }
+
+    async function archiveAllCards(columnId) {
+        if (!confirm('Delete all cards in this list? This cannot be undone.')) return;
+
+        try {
+            const col = boardData.columns.find(c => parseInt(c.id) === columnId);
+            if (!col || !col.cards) return;
+
+            for (const card of col.cards) {
+                await apiDelete('cards/' + card.id);
+            }
+
+            // Refresh board
+            boardData = await apiGet('board/' + BOARD_ID);
+            const app = document.getElementById('cwds-kanban-app');
+            renderBoard(app);
+        } catch (err) {
+            console.error('Archive all cards failed:', err);
+        }
     }
 
     // ═══════════════════════════════════════════════
@@ -1971,6 +2061,9 @@
         showAddList,
         submitAddList,
         cancelAddList,
+        showColumnMenu,
+        deleteColumn,
+        archiveAllCards,
         showAddCard,
         submitAddCard,
         cancelAddCard,

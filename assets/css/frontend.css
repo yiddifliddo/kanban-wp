@@ -146,6 +146,7 @@
     padding: 12px 14px 8px;
     flex-shrink: 0;
     cursor: grab;
+    position: relative;
 }
 
 .cwds-column-header:active {
@@ -168,6 +169,108 @@
     padding: 2px 8px;
     border-radius: 10px;
     font-weight: 600;
+}
+
+.cwds-column-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cwds-column-menu-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    color: var(--cwds-text-dim);
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+    padding: 0;
+}
+
+.cwds-column:hover .cwds-column-menu-btn {
+    opacity: 1;
+}
+
+.cwds-column-menu-btn:hover {
+    background: rgba(9, 30, 66, 0.08);
+    color: var(--cwds-text);
+}
+
+.cwds-column-menu-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ── Column dropdown menu ── */
+.cwds-column-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 220px;
+    background: var(--cwds-white);
+    border-radius: var(--cwds-radius-lg);
+    padding: 8px 0;
+    box-shadow: 0 8px 24px rgba(9, 30, 66, 0.25);
+    z-index: 50;
+    animation: cwds-popover-in 0.12s ease;
+}
+
+.cwds-column-menu-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--cwds-text-muted);
+    padding: 4px 12px 8px;
+    border-bottom: 1px solid var(--cwds-border);
+}
+
+.cwds-column-menu-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    background: none;
+    border: none;
+    color: var(--cwds-text-dim);
+    cursor: pointer;
+    padding: 2px;
+}
+
+.cwds-column-menu-close svg {
+    width: 12px;
+    height: 12px;
+}
+
+.cwds-column-menu-item {
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--cwds-text);
+    cursor: pointer;
+    transition: background 0.1s;
+    font-family: var(--cwds-font);
+}
+
+.cwds-column-menu-item:hover {
+    background: var(--cwds-bg);
+}
+
+.cwds-column-menu-danger {
+    color: var(--cwds-danger);
+}
+
+.cwds-column-menu-danger:hover {
+    background: rgba(235, 90, 70, 0.06);
+}
+
+.cwds-column-menu-sep {
+    border: none;
+    border-top: 1px solid var(--cwds-border);
+    margin: 4px 0;
 }
 
 .cwds-column-cards {

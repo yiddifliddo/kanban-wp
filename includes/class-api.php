@@ -68,6 +68,12 @@ class CWDS_Kanban_API {
             'permission_callback' => '__return_true'
         ));
 
+        register_rest_route($this->namespace, '/columns/(?P<id>\d+)', array(
+            'methods' => 'DELETE',
+            'callback' => array($this, 'delete_column'),
+            'permission_callback' => '__return_true'
+        ));
+
         // ── Cards ──
         register_rest_route($this->namespace, '/cards', array(
             'methods' => 'POST',
@@ -311,6 +317,54 @@ class CWDS_Kanban_API {
                 array('%d')
             );
         }
+
+        return rest_ensure_response(array('success' => true));
+    }
+
+    public function delete_column($request) {
+        $auth = $this->authenticate($request);
+        if (is_wp_error($auth)) return $auth;
+        if ($auth->type !== 'admin') return new WP_Error('forbidden', 'Admin only', array('status' => 403));
+
+        global $wpdb;
+        $column_id = (int) $request['id'];
+
+        $column = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM " . CWDS_KANBAN_TABLE_COLUMNS . " WHERE id = %d", $column_id
+        ));
+        if (!$column) return new WP_Error('not_found', 'Column not found', array('status' => 404));
+
+        // Get all cards in this column
+        $card_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM " . CWDS_KANBAN_TABLE_CARDS . " WHERE column_id = %d", $column_id
+        ));
+
+        // Delete all card data for each card
+        foreach ($card_ids as $card_id) {
+            $wpdb->delete(CWDS_KANBAN_TABLE_CARD_LABELS, array('card_id' => $card_id), array('%d'));
+            $wpdb->delete(CWDS_KANBAN_TABLE_CARD_MEMBERS, array('card_id' => $card_id), array('%d'));
+            $checklists = $wpdb->get_col($wpdb->prepare(
+                "SELECT id FROM " . CWDS_KANBAN_TABLE_CHECKLISTS . " WHERE card_id = %d", $card_id
+            ));
+            foreach ($checklists as $cl_id) {
+                $wpdb->delete(CWDS_KANBAN_TABLE_CHECKLIST_ITEMS, array('checklist_id' => $cl_id), array('%d'));
+            }
+            $wpdb->delete(CWDS_KANBAN_TABLE_CHECKLISTS, array('card_id' => $card_id), array('%d'));
+            $attachments = $wpdb->get_results($wpdb->prepare(
+                "SELECT file_path FROM " . CWDS_KANBAN_TABLE_ATTACHMENTS . " WHERE card_id = %d", $card_id
+            ));
+            foreach ($attachments as $att) {
+                if (file_exists($att->file_path)) unlink($att->file_path);
+            }
+            $wpdb->delete(CWDS_KANBAN_TABLE_ATTACHMENTS, array('card_id' => $card_id), array('%d'));
+            $wpdb->delete(CWDS_KANBAN_TABLE_COMMENTS, array('card_id' => $card_id), array('%d'));
+            $wpdb->delete(CWDS_KANBAN_TABLE_ACTIVITY, array('card_id' => $card_id), array('%d'));
+        }
+
+        // Delete all cards in the column
+        $wpdb->delete(CWDS_KANBAN_TABLE_CARDS, array('column_id' => $column_id), array('%d'));
+        // Delete the column
+        $wpdb->delete(CWDS_KANBAN_TABLE_COLUMNS, array('id' => $column_id), array('%d'));
 
         return rest_ensure_response(array('success' => true));
     }

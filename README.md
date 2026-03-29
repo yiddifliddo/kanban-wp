@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.1.4
+**Version:** 1.1.5
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,11 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.1.5 — Delete Lists & Column Menu
+- **NEW: Column `...` menu.** Hover over a column header to reveal a three-dot menu button (admin only). Opens a dropdown with: Add card, Archive all cards in list, and Archive this list.
+- **NEW: `DELETE /columns/{id}` API endpoint.** Fully cleans up all cards, labels, members, checklists, attachments, comments, and activity before deleting the column.
+- **NEW: Archive all cards.** Bulk-delete all cards in a list from the column menu.
 
 ### v1.1.4 — Delete Labels from Admin Backend
 - **NEW: Delete labels from wp-admin.** Each label in the board management page now has an × button. Click it, confirm, and the label is removed from all cards and deleted. Previously labels could only be deleted from the frontend picker.
