@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.1.5
+**Version:** 1.1.6
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,10 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.1.6 — Fix Card Menu & Notification Prefs Popovers
+- **FIX: Card `...` menu now works.** The modal's click-outside handler was immediately closing the popover because the `...` button class (`cwds-modal-top-btn`) wasn't in the exclusion list. Now excluded alongside action buttons and meta buttons.
+- **FIX: Gear icon notification preferences now works.** `positionPopover` was silently returning when the button had no `.cwds-modal` ancestor. Now falls back to `document.body` with `position: fixed` for board-level popovers. Includes click-outside dismiss handler.
 
 ### v1.1.5 — Delete Lists & Column Menu
 - **NEW: Column `...` menu.** Hover over a column header to reveal a three-dot menu button (admin only). Opens a dropdown with: Add card, Archive all cards in list, and Archive this list.

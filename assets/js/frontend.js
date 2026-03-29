@@ -847,7 +847,7 @@
             // If the click target is detached from the DOM (e.g. after popover content swap),
             // don't close — the popover was just rebuilt
             if (!document.body.contains(e.target)) return;
-            if (!e.target.closest('.cwds-popover') && !e.target.closest('.cwds-action-btn') && !e.target.closest('.cwds-meta-add-btn')) {
+            if (!e.target.closest('.cwds-popover') && !e.target.closest('.cwds-action-btn') && !e.target.closest('.cwds-meta-add-btn') && !e.target.closest('.cwds-modal-top-btn') && !e.target.closest('.cwds-due-date-btn')) {
                 closePopovers();
             }
         });
@@ -1545,6 +1545,7 @@
         html += '</div>';
 
         positionPopover(btn, html);
+        addBodyPopoverDismiss();
 
         // Load preferences
         apiGet('notifications/preferences').then(function(prefs) {
@@ -1870,36 +1871,64 @@
         document.querySelectorAll('.cwds-popover').forEach(p => p.remove());
     }
 
+    function addBodyPopoverDismiss() {
+        setTimeout(function() {
+            document.addEventListener('click', function dismissBodyPopover(e) {
+                if (!e.target.closest('.cwds-popover') && !e.target.closest('.cwds-notif-prefs-btn')) {
+                    closePopovers();
+                    document.removeEventListener('click', dismissBodyPopover);
+                }
+            });
+        }, 10);
+    }
+
     /**
      * Position a popover as an absolute overlay near the triggering button
      */
     function positionPopover(btn, html) {
+        // Try modal first, then fall back to body (for board-level popovers)
         const modal = btn.closest('.cwds-modal');
-        if (!modal) return;
+        const container = modal || document.body;
 
         const wrapper = document.createElement('div');
         wrapper.innerHTML = html;
         const popover = wrapper.firstChild;
-        modal.appendChild(popover);
+        container.appendChild(popover);
 
-        // Position relative to the button within the modal
         const btnRect = btn.getBoundingClientRect();
-        const modalRect = modal.getBoundingClientRect();
 
-        let top = btnRect.bottom - modalRect.top + 4;
-        let left = btnRect.left - modalRect.left;
+        if (modal) {
+            // Position relative to the modal
+            const modalRect = modal.getBoundingClientRect();
+            let top = btnRect.bottom - modalRect.top + 4;
+            let left = btnRect.left - modalRect.left;
 
-        // Ensure popover doesn't overflow right edge
-        const popWidth = 300;
-        if (left + popWidth > modalRect.width) {
-            left = modalRect.width - popWidth - 12;
+            const popWidth = 300;
+            if (left + popWidth > modalRect.width) {
+                left = modalRect.width - popWidth - 12;
+            }
+            if (left < 12) left = 12;
+
+            popover.style.position = 'absolute';
+            popover.style.top = top + 'px';
+            popover.style.left = left + 'px';
+            popover.style.zIndex = '100';
+        } else {
+            // Position fixed relative to viewport (board-level popovers)
+            let top = btnRect.bottom + 4;
+            let left = btnRect.left;
+
+            const popWidth = 300;
+            if (left + popWidth > window.innerWidth) {
+                left = window.innerWidth - popWidth - 12;
+            }
+            if (left < 12) left = 12;
+
+            popover.style.position = 'fixed';
+            popover.style.top = top + 'px';
+            popover.style.left = left + 'px';
+            popover.style.zIndex = '1000000';
         }
-        if (left < 12) left = 12;
-
-        popover.style.position = 'absolute';
-        popover.style.top = top + 'px';
-        popover.style.left = left + 'px';
-        popover.style.zIndex = '100';
     }
 
     // ═══════════════════════════════════════════════
