@@ -444,21 +444,21 @@
         // ══════ LEFT PANEL ══════
         html += '<div class="cwds-modal-left">';
 
-        // Column indicator + Title
+        // Complete toggle circle + Title (Trello style)
         html += '<div class="cwds-modal-header">';
-        html += '<div class="cwds-modal-column-name">in ' + escHtml(colName) + '</div>';
+        html += '<div class="cwds-modal-title-row">';
+        html += '<div class="cwds-complete-circle' + (card.is_complete == 1 ? ' is-complete' : '') + '" onclick="cwdsKanbanApp.toggleComplete(' + card.id + ', this)" title="' + (card.is_complete == 1 ? 'Completed' : 'Mark as complete') + '">' + (card.is_complete == 1 ? ICONS.check : '') + '</div>';
         html += '<div class="cwds-modal-title" contenteditable="true" data-card-id="' + card.id + '" onblur="cwdsKanbanApp.updateTitle(this)">' + escHtml(card.title) + '</div>';
         html += '</div>';
+        html += '<div class="cwds-modal-column-name">in <strong>' + escHtml(colName) + '</strong></div>';
+        html += '</div>';
 
-        // Action buttons row
+        // Action buttons row (Trello style: + Add, Dates, Checklist, Attachment)
         html += '<div class="cwds-modal-actions">';
-        html += '<button class="cwds-action-btn" onclick="cwdsKanbanApp.showLabelPicker(this, ' + card.id + ')">' + ICONS.tag + ' Labels</button>';
-        html += '<button class="cwds-action-btn" onclick="cwdsKanbanApp.showMemberPicker(this, ' + card.id + ')">' + ICONS.users + ' Members</button>';
+        html += '<button class="cwds-action-btn cwds-action-btn-add" onclick="cwdsKanbanApp.showAddToCard(this, ' + card.id + ')">' + ICONS.plus + ' Add</button>';
+        html += '<button class="cwds-action-btn" onclick="cwdsKanbanApp.focusDueDate()">' + ICONS.calendar + ' Dates</button>';
         html += '<button class="cwds-action-btn" onclick="cwdsKanbanApp.addChecklist(' + card.id + ')">' + ICONS.checklist + ' Checklist</button>';
         html += '<button class="cwds-action-btn" onclick="document.getElementById(\'cwds-upload-zone\').querySelector(\'input\').click()">' + ICONS.paperclip + ' Attachment</button>';
-        if (boardData.auth.type === 'admin') {
-            html += '<button class="cwds-action-btn cwds-action-danger" onclick="cwdsKanbanApp.deleteCard(' + card.id + ')">' + ICONS.trash + ' Delete</button>';
-        }
         html += '</div>';
 
         // Metadata row: Members | Labels | Due date
@@ -470,7 +470,7 @@
         html += '<div class="cwds-meta-value cwds-meta-members">';
         if (card.members && card.members.length) {
             for (const m of card.members) {
-                html += '<div class="cwds-user-avatar" style="background:' + escHtml(m.avatar_color) + ';width:30px;height:30px;font-size:10px;" title="' + escHtml(m.name) + '">' + getInitials(m.name) + '</div>';
+                html += '<div class="cwds-user-avatar" style="background:' + escHtml(m.avatar_color) + ';width:32px;height:32px;font-size:10px;" title="' + escHtml(m.name) + '">' + getInitials(m.name) + '</div>';
             }
         }
         html += '<button class="cwds-meta-add-btn" onclick="cwdsKanbanApp.showMemberPicker(this, ' + card.id + ')">+</button>';
@@ -492,19 +492,13 @@
         html += '<div class="cwds-meta-group">';
         html += '<div class="cwds-meta-label">Due date</div>';
         html += '<div class="cwds-meta-value">';
-        html += '<input type="datetime-local" class="cwds-due-date-input" value="' + (card.due_date ? card.due_date.replace(' ', 'T').substring(0, 16) : '') + '" onchange="cwdsKanbanApp.updateDueDate(' + card.id + ', this.value)">';
+        html += '<input type="datetime-local" class="cwds-due-date-input" id="cwds-due-date-input" value="' + (card.due_date ? card.due_date.replace(' ', 'T').substring(0, 16) : '') + '" onchange="cwdsKanbanApp.updateDueDate(' + card.id + ', this.value)">';
         if (card.due_date) {
             html += ' <button class="cwds-btn cwds-btn-ghost cwds-btn-sm" onclick="cwdsKanbanApp.clearDueDate(' + card.id + ', this)" style="margin-left:4px;">×</button>';
         }
         html += '</div></div>';
 
         html += '</div>'; // end meta row
-
-        // Complete toggle
-        html += '<div class="cwds-complete-toggle' + (card.is_complete == 1 ? ' is-complete' : '') + '" onclick="cwdsKanbanApp.toggleComplete(' + card.id + ', this)">';
-        html += '<div class="cwds-complete-checkbox">' + (card.is_complete == 1 ? ICONS.check : '') + '</div>';
-        html += (card.is_complete == 1 ? 'Completed' : 'Mark as complete');
-        html += '</div>';
 
         // Description
         html += '<div class="cwds-modal-section">';
@@ -520,18 +514,23 @@
         }
 
         // Attachments
-        if ((card.attachments && card.attachments.length) || true) {
-            html += '<div class="cwds-attachments">';
-            html += '<div class="cwds-section-title">' + ICONS.paperclip + ' Attachments</div>';
-            if (card.attachments && card.attachments.length) {
-                for (const att of card.attachments) {
-                    html += renderAttachment(att);
-                }
+        html += '<div class="cwds-attachments">';
+        html += '<div class="cwds-section-title">' + ICONS.paperclip + ' Attachments</div>';
+        if (card.attachments && card.attachments.length) {
+            for (const att of card.attachments) {
+                html += renderAttachment(att);
             }
-            html += '<div class="cwds-upload-zone" onclick="this.querySelector(\'input\').click()" id="cwds-upload-zone">';
-            html += '<input type="file" onchange="cwdsKanbanApp.uploadFile(' + card.id + ', this.files[0])">';
-            html += ICONS.plus + ' Drop file or click to upload';
-            html += '</div></div>';
+        }
+        html += '<div class="cwds-upload-zone" onclick="this.querySelector(\'input\').click()" id="cwds-upload-zone">';
+        html += '<input type="file" onchange="cwdsKanbanApp.uploadFile(' + card.id + ', this.files[0])">';
+        html += ICONS.plus + ' Drop file or click to upload';
+        html += '</div></div>';
+
+        // Delete button (admin only, at bottom)
+        if (boardData.auth.type === 'admin') {
+            html += '<div class="cwds-modal-delete-row">';
+            html += '<button class="cwds-action-btn cwds-action-danger" onclick="cwdsKanbanApp.deleteCard(' + card.id + ')">' + ICONS.trash + ' Delete card</button>';
+            html += '</div>';
         }
 
         html += '</div>'; // end left panel
@@ -542,7 +541,7 @@
 
         // Comment input
         html += '<div class="cwds-comment-input-wrap">';
-        html += '<textarea class="cwds-comment-input" id="cwds-comment-input" placeholder="Write a comment... Use @name to mention someone" rows="2"></textarea>';
+        html += '<textarea class="cwds-comment-input" id="cwds-comment-input" placeholder="Write a comment..." rows="2"></textarea>';
         html += '<button class="cwds-btn cwds-btn-primary cwds-btn-sm" onclick="cwdsKanbanApp.postComment(' + card.id + ')" style="margin-top:6px;">Save</button>';
         html += '</div>';
 
@@ -759,10 +758,59 @@
         try {
             await apiPut('cards/' + cardId, { is_complete: isComplete });
             el.classList.toggle('is-complete');
-            el.querySelector('.cwds-complete-checkbox').innerHTML = isComplete ? ICONS.check : '';
-            el.childNodes[1].textContent = isComplete ? 'Completed' : 'Mark as complete';
+            el.innerHTML = isComplete ? ICONS.check : '';
+            el.title = isComplete ? 'Completed' : 'Mark as complete';
         } catch (err) {
             console.error('Toggle complete failed:', err);
+        }
+    }
+
+    // ═══════════════════════════════════════════════
+    // ADD TO CARD DROPDOWN (Trello-style)
+    // ═══════════════════════════════════════════════
+
+    function showAddToCard(btn, cardId) {
+        closePopovers();
+
+        let html = '<div class="cwds-popover cwds-add-to-card-popover">';
+        html += '<div class="cwds-popover-title">Add to card</div>';
+        html += '<button class="cwds-popover-close" onclick="cwdsKanbanApp.closePopovers()">' + ICONS.x + '</button>';
+
+        html += '<div class="cwds-add-to-card-list">';
+        html += '<div class="cwds-add-to-card-item" onclick="cwdsKanbanApp.closePopovers();cwdsKanbanApp.showLabelPicker(document.querySelector(\'.cwds-meta-add-btn[onclick*=showLabelPicker]\'), ' + cardId + ')">';
+        html += '<div class="cwds-add-to-card-icon">' + ICONS.tag + '</div>';
+        html += '<div><div class="cwds-add-to-card-name">Labels</div><div class="cwds-add-to-card-desc">Organize, categorize, and prioritize</div></div>';
+        html += '</div>';
+
+        html += '<div class="cwds-add-to-card-item" onclick="cwdsKanbanApp.closePopovers();cwdsKanbanApp.focusDueDate()">';
+        html += '<div class="cwds-add-to-card-icon">' + ICONS.calendar + '</div>';
+        html += '<div><div class="cwds-add-to-card-name">Dates</div><div class="cwds-add-to-card-desc">Start dates, due dates, and reminders</div></div>';
+        html += '</div>';
+
+        html += '<div class="cwds-add-to-card-item" onclick="cwdsKanbanApp.closePopovers();cwdsKanbanApp.addChecklist(' + cardId + ')">';
+        html += '<div class="cwds-add-to-card-icon">' + ICONS.checklist + '</div>';
+        html += '<div><div class="cwds-add-to-card-name">Checklist</div><div class="cwds-add-to-card-desc">Add subtasks</div></div>';
+        html += '</div>';
+
+        html += '<div class="cwds-add-to-card-item" onclick="cwdsKanbanApp.closePopovers();cwdsKanbanApp.showMemberPicker(document.querySelector(\'.cwds-meta-add-btn[onclick*=showMemberPicker]\'), ' + cardId + ')">';
+        html += '<div class="cwds-add-to-card-icon">' + ICONS.users + '</div>';
+        html += '<div><div class="cwds-add-to-card-name">Members</div><div class="cwds-add-to-card-desc">Assign members</div></div>';
+        html += '</div>';
+
+        html += '<div class="cwds-add-to-card-item" onclick="cwdsKanbanApp.closePopovers();document.getElementById(\'cwds-upload-zone\').querySelector(\'input\').click()">';
+        html += '<div class="cwds-add-to-card-icon">' + ICONS.paperclip + '</div>';
+        html += '<div><div class="cwds-add-to-card-name">Attachment</div><div class="cwds-add-to-card-desc">Add links, pages, work items, and more</div></div>';
+        html += '</div>';
+
+        html += '</div></div>';
+
+        positionPopover(btn, html);
+    }
+
+    function focusDueDate() {
+        const input = document.getElementById('cwds-due-date-input');
+        if (input) {
+            input.showPicker ? input.showPicker() : input.focus();
         }
     }
 
@@ -1234,6 +1282,8 @@
         clearDueDate,
         toggleComplete,
         deleteCard,
+        showAddToCard,
+        focusDueDate,
         showLabelPicker,
         filterLabels,
         showCreateLabel,
