@@ -144,6 +144,19 @@ class CWDS_Kanban_API {
             'callback' => array($this, 'delete_comment'),
             'permission_callback' => '__return_true'
         ));
+
+        // ── Watchers ──
+        register_rest_route($this->namespace, '/cards/(?P<card_id>\d+)/watch', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'toggle_watch'),
+            'permission_callback' => '__return_true'
+        ));
+
+        // ── Notification Preferences ──
+        register_rest_route($this->namespace, '/notifications/preferences', array(
+            array('methods' => 'GET', 'callback' => array($this, 'get_notification_prefs'), 'permission_callback' => '__return_true'),
+            array('methods' => 'PUT', 'callback' => array($this, 'update_notification_prefs'), 'permission_callback' => '__return_true'),
+        ));
     }
 
     // ─────────────────────────────────────────────
@@ -386,6 +399,20 @@ class CWDS_Kanban_API {
         $card->comments = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM " . CWDS_KANBAN_TABLE_COMMENTS . " WHERE card_id = %d ORDER BY created_at DESC LIMIT 100", $card_id
         ));
+
+        // Watchers
+        $card->watchers = $wpdb->get_results($wpdb->prepare(
+            "SELECT m.id, m.name FROM " . CWDS_KANBAN_TABLE_WATCHERS . " w
+             JOIN " . CWDS_KANBAN_TABLE_MEMBERS . " m ON w.member_id = m.id
+             WHERE w.card_id = %d", $card_id
+        ));
+        $card->is_watching = false;
+        if ($auth->type === 'client' && isset($auth->member_id)) {
+            $card->is_watching = (bool) $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM " . CWDS_KANBAN_TABLE_WATCHERS . " WHERE card_id = %d AND member_id = %d",
+                $card_id, $auth->member_id
+            ));
+        }
 
         return rest_ensure_response($card);
     }
@@ -918,8 +945,9 @@ class CWDS_Kanban_API {
 
         $comment_id = $wpdb->insert_id;
 
-        // Log activity
+        // Log activity & notify watchers
         $this->log_activity($card->board_id, $card_id, $auth->name, $auth->type, 'commented', "commented on \"{$card->title}\"");
+        $this->notify_watchers($card_id, 'commented', "commented on \"{$card->title}\"", $auth->name);
 
         return rest_ensure_response(array(
             'id' => $comment_id,
@@ -954,5 +982,151 @@ class CWDS_Kanban_API {
         $wpdb->delete(CWDS_KANBAN_TABLE_COMMENTS, array('id' => $comment_id), array('%d'));
 
         return rest_ensure_response(array('success' => true));
+    }
+
+    // ─────────────────────────────────────────────
+    // WATCHERS
+    // ─────────────────────────────────────────────
+
+    public function toggle_watch($request) {
+        $auth = $this->authenticate($request);
+        if (is_wp_error($auth)) return $auth;
+        if ($auth->type !== 'client' || !isset($auth->member_id)) {
+            // Admins — use their WP user email to find/create a watcher entry
+            return new WP_Error('not_supported', 'Watching is for board members', array('status' => 400));
+        }
+
+        global $wpdb;
+        $card_id = (int) $request['card_id'];
+        $member_id = (int) $auth->member_id;
+
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM " . CWDS_KANBAN_TABLE_WATCHERS . " WHERE card_id = %d AND member_id = %d",
+            $card_id, $member_id
+        ));
+
+        if ($exists) {
+            $wpdb->delete(CWDS_KANBAN_TABLE_WATCHERS, array('card_id' => $card_id, 'member_id' => $member_id), array('%d', '%d'));
+            return rest_ensure_response(array('watching' => false));
+        } else {
+            $wpdb->insert(CWDS_KANBAN_TABLE_WATCHERS, array('card_id' => $card_id, 'member_id' => $member_id), array('%d', '%d'));
+            return rest_ensure_response(array('watching' => true));
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // NOTIFICATION PREFERENCES
+    // ─────────────────────────────────────────────
+
+    public function get_notification_prefs($request) {
+        $auth = $this->authenticate($request);
+        if (is_wp_error($auth)) return $auth;
+        if ($auth->type !== 'client' || !isset($auth->member_id)) {
+            return rest_ensure_response(array('notify_comments' => 1, 'notify_due_dates' => 1, 'notify_assignments' => 1, 'notify_card_moves' => 1, 'notify_attachments' => 0));
+        }
+
+        global $wpdb;
+        $prefs = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM " . CWDS_KANBAN_TABLE_NOTIFICATIONS . " WHERE member_id = %d", $auth->member_id
+        ));
+
+        if (!$prefs) {
+            return rest_ensure_response(array(
+                'notify_comments' => 1, 'notify_due_dates' => 1,
+                'notify_assignments' => 1, 'notify_card_moves' => 1, 'notify_attachments' => 0
+            ));
+        }
+
+        return rest_ensure_response(array(
+            'notify_comments' => (int) $prefs->notify_comments,
+            'notify_due_dates' => (int) $prefs->notify_due_dates,
+            'notify_assignments' => (int) $prefs->notify_assignments,
+            'notify_card_moves' => (int) $prefs->notify_card_moves,
+            'notify_attachments' => (int) $prefs->notify_attachments
+        ));
+    }
+
+    public function update_notification_prefs($request) {
+        $auth = $this->authenticate($request);
+        if (is_wp_error($auth)) return $auth;
+        if ($auth->type !== 'client' || !isset($auth->member_id)) {
+            return new WP_Error('not_supported', 'Preferences are for board members', array('status' => 400));
+        }
+
+        global $wpdb;
+        $params = $request->get_json_params();
+        $member_id = (int) $auth->member_id;
+
+        $data = array(
+            'member_id' => $member_id,
+            'notify_comments' => isset($params['notify_comments']) ? (int) $params['notify_comments'] : 1,
+            'notify_due_dates' => isset($params['notify_due_dates']) ? (int) $params['notify_due_dates'] : 1,
+            'notify_assignments' => isset($params['notify_assignments']) ? (int) $params['notify_assignments'] : 1,
+            'notify_card_moves' => isset($params['notify_card_moves']) ? (int) $params['notify_card_moves'] : 1,
+            'notify_attachments' => isset($params['notify_attachments']) ? (int) $params['notify_attachments'] : 0,
+        );
+
+        $existing = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM " . CWDS_KANBAN_TABLE_NOTIFICATIONS . " WHERE member_id = %d", $member_id
+        ));
+
+        if ($existing) {
+            $wpdb->update(CWDS_KANBAN_TABLE_NOTIFICATIONS, $data, array('member_id' => $member_id));
+        } else {
+            $wpdb->insert(CWDS_KANBAN_TABLE_NOTIFICATIONS, $data);
+        }
+
+        return rest_ensure_response(array('success' => true));
+    }
+
+    /**
+     * Helper: Notify watchers of a card about a change
+     */
+    private function notify_watchers($card_id, $event_type, $details, $actor_name) {
+        global $wpdb;
+
+        // Get all watchers for this card
+        $watchers = $wpdb->get_results($wpdb->prepare(
+            "SELECT w.member_id, m.name, m.email FROM " . CWDS_KANBAN_TABLE_WATCHERS . " w
+             JOIN " . CWDS_KANBAN_TABLE_MEMBERS . " m ON w.member_id = m.id
+             WHERE w.card_id = %d", $card_id
+        ));
+
+        if (empty($watchers)) return;
+
+        $card = $wpdb->get_row($wpdb->prepare(
+            "SELECT c.title, b.title as board_title FROM " . CWDS_KANBAN_TABLE_CARDS . " c
+             JOIN " . CWDS_KANBAN_TABLE_BOARDS . " b ON c.board_id = b.id
+             WHERE c.id = %d", $card_id
+        ));
+        if (!$card) return;
+
+        foreach ($watchers as $watcher) {
+            // Don't notify the person who made the change
+            if ($watcher->name === $actor_name) continue;
+
+            // Check notification preferences
+            $prefs = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM " . CWDS_KANBAN_TABLE_NOTIFICATIONS . " WHERE member_id = %d", $watcher->member_id
+            ));
+
+            $should_notify = true;
+            if ($prefs) {
+                switch ($event_type) {
+                    case 'commented': $should_notify = (bool) $prefs->notify_comments; break;
+                    case 'moved': $should_notify = (bool) $prefs->notify_card_moves; break;
+                    case 'updated': $should_notify = (bool) $prefs->notify_due_dates; break;
+                    case 'attached': $should_notify = (bool) $prefs->notify_attachments; break;
+                    case 'assigned': $should_notify = (bool) $prefs->notify_assignments; break;
+                }
+            }
+
+            if ($should_notify) {
+                $subject = "[{$card->board_title}] {$actor_name} {$details}";
+                $body = "<p><strong>{$actor_name}</strong> {$details}</p><p>Card: <strong>{$card->title}</strong></p><p>Board: {$card->board_title}</p>";
+                $headers = array('Content-Type: text/html; charset=UTF-8');
+                wp_mail($watcher->email, $subject, $body, $headers);
+            }
+        }
     }
 }

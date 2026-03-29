@@ -193,6 +193,34 @@ class CWDS_Kanban_Database {
         ) $charset_collate;";
         dbDelta($sql);
 
+        // Card Watchers
+        $sql = "CREATE TABLE " . CWDS_KANBAN_TABLE_WATCHERS . " (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            card_id bigint(20) UNSIGNED NOT NULL,
+            member_id bigint(20) UNSIGNED NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY card_member (card_id, member_id),
+            KEY card_id (card_id),
+            KEY member_id (member_id)
+        ) $charset_collate;";
+        dbDelta($sql);
+
+        // Notification Preferences
+        $sql = "CREATE TABLE " . CWDS_KANBAN_TABLE_NOTIFICATIONS . " (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            member_id bigint(20) UNSIGNED NOT NULL,
+            notify_comments tinyint(1) DEFAULT 1,
+            notify_due_dates tinyint(1) DEFAULT 1,
+            notify_assignments tinyint(1) DEFAULT 1,
+            notify_card_moves tinyint(1) DEFAULT 1,
+            notify_attachments tinyint(1) DEFAULT 0,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY member_id (member_id)
+        ) $charset_collate;";
+        dbDelta($sql);
+
         // Store DB version
         update_option('cwds_kanban_db_version', CWDS_KANBAN_VERSION);
     }

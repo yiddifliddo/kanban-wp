@@ -3,7 +3,7 @@
  * Plugin Name: CWDS Kanban Board
  * Plugin URI: https://charlestonwebsitestudio.com/
  * Description: Client-facing Kanban project management boards with magic link authentication. No WordPress login required for clients.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Dan Lee
  * Author URI: https://charlestonwebsitestudio.com/
  * License: GPL v2 or later
@@ -12,7 +12,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('CWDS_KANBAN_VERSION', '1.1.0');
+define('CWDS_KANBAN_VERSION', '1.1.1');
 define('CWDS_KANBAN_PATH', plugin_dir_path(__FILE__));
 define('CWDS_KANBAN_URL', plugin_dir_url(__FILE__));
 define('CWDS_KANBAN_BASENAME', plugin_basename(__FILE__));
@@ -32,6 +32,8 @@ define('CWDS_KANBAN_TABLE_ATTACHMENTS', $wpdb->prefix . 'cwds_kanban_attachments
 define('CWDS_KANBAN_TABLE_ACTIVITY', $wpdb->prefix . 'cwds_kanban_activity');
 define('CWDS_KANBAN_TABLE_TOKENS', $wpdb->prefix . 'cwds_kanban_tokens');
 define('CWDS_KANBAN_TABLE_COMMENTS', $wpdb->prefix . 'cwds_kanban_comments');
+define('CWDS_KANBAN_TABLE_WATCHERS', $wpdb->prefix . 'cwds_kanban_watchers');
+define('CWDS_KANBAN_TABLE_NOTIFICATIONS', $wpdb->prefix . 'cwds_kanban_notifications');
 
 // Include classes
 require_once CWDS_KANBAN_PATH . 'includes/class-database.php';

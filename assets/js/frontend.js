@@ -97,7 +97,9 @@
         copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
         archive: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>',
         share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
-        saved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+        saved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        watch: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+        settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'
     };
 
     function getInitials(name) {
@@ -109,6 +111,17 @@
         const d = new Date(dateStr);
         const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         return months[d.getMonth()] + ' ' + d.getDate();
+    }
+
+    function formatDateFull(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr.replace(' ', 'T'));
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        let h = d.getHours(), m = d.getMinutes();
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        const mins = m < 10 ? '0' + m : m;
+        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() + ' at ' + h + ':' + mins + ' ' + ampm;
     }
 
     function isOverdue(dateStr) {
@@ -162,6 +175,7 @@
         let html = '<div class="cwds-board-header">';
         html += '<h2>' + escHtml(board.title) + '</h2>';
         html += '<div class="cwds-user-badge">';
+        html += '<button class="cwds-notif-prefs-btn" onclick="cwdsKanbanApp.showNotificationPrefs(this)" title="Notification preferences">' + ICONS.settings + '</button>';
         html += '<div class="cwds-user-avatar" style="background:var(--cwds-lime);">' + getInitials(auth.name) + '</div>';
         html += escHtml(auth.name);
         html += '</div></div>';
@@ -554,6 +568,8 @@
         }
 
         let html = '<div class="cwds-modal-top-actions">';
+        const watchClass = card.is_watching ? ' cwds-watching' : '';
+        html += '<button class="cwds-modal-top-btn' + watchClass + '" id="cwds-watch-indicator" onclick="cwdsKanbanApp.toggleWatch(' + card.id + ')" title="' + (card.is_watching ? 'Watching (click to unwatch)' : 'Watch this card') + '">' + ICONS.watch + '</button>';
         html += '<button class="cwds-modal-top-btn" onclick="cwdsKanbanApp.showCardMenu(this, ' + card.id + ')" title="More actions">' + ICONS.more + '</button>';
         html += '<button class="cwds-modal-close" onclick="cwdsKanbanApp.closeModal()">' + ICONS.x + '</button>';
         html += '</div>';
@@ -612,9 +628,15 @@
         html += '<div class="cwds-meta-group">';
         html += '<div class="cwds-meta-label">Due date</div>';
         html += '<div class="cwds-meta-value">';
-        html += '<input type="datetime-local" class="cwds-due-date-input" id="cwds-due-date-input" value="' + (card.due_date ? card.due_date.replace(' ', 'T').substring(0, 16) : '') + '" onchange="cwdsKanbanApp.updateDueDate(' + card.id + ', this.value)">';
         if (card.due_date) {
-            html += ' <button class="cwds-btn cwds-btn-ghost cwds-btn-sm" onclick="cwdsKanbanApp.clearDueDate(' + card.id + ', this)" style="margin-left:4px;">×</button>';
+            const d = new Date(card.due_date.replace(' ', 'T'));
+            const overdue = !card.is_complete && d < new Date();
+            const dateClass = card.is_complete == 1 ? ' cwds-date-complete' : (overdue ? ' cwds-date-overdue' : '');
+            html += '<button class="cwds-due-date-btn' + dateClass + '" onclick="cwdsKanbanApp.showDatePicker(this, ' + card.id + ')">';
+            html += ICONS.calendar + ' ' + formatDateFull(card.due_date);
+            html += '</button>';
+        } else {
+            html += '<button class="cwds-meta-add-btn" onclick="cwdsKanbanApp.showDatePicker(this, ' + card.id + ')">+</button>';
         }
         html += '</div></div>';
 
@@ -1037,7 +1059,7 @@
         html += '<div><div class="cwds-add-to-card-name">Labels</div><div class="cwds-add-to-card-desc">Organize, categorize, and prioritize</div></div>';
         html += '</div>';
 
-        html += '<div class="cwds-add-to-card-item" onclick="cwdsKanbanApp.closePopovers();cwdsKanbanApp.focusDueDate()">';
+        html += '<div class="cwds-add-to-card-item" onclick="cwdsKanbanApp.closePopovers();var b=document.querySelector(\'.cwds-due-date-btn,.cwds-meta-add-btn[onclick*=showDatePicker]\');if(b)cwdsKanbanApp.showDatePicker(b,' + cardId + ')">';
         html += '<div class="cwds-add-to-card-icon">' + ICONS.calendar + '</div>';
         html += '<div><div class="cwds-add-to-card-name">Dates</div><div class="cwds-add-to-card-desc">Start dates, due dates, and reminders</div></div>';
         html += '</div>';
@@ -1063,9 +1085,209 @@
     }
 
     function focusDueDate() {
-        const input = document.getElementById('cwds-due-date-input');
-        if (input) {
-            input.showPicker ? input.showPicker() : input.focus();
+        // Open date picker from the Dates action button
+        const btn = document.querySelector('.cwds-action-btn[onclick*="focusDueDate"]');
+        const cardId = currentModal ? currentModal.id : null;
+        if (btn && cardId) showDatePicker(btn, cardId);
+    }
+
+    // ═══════════════════════════════════════════════
+    // DATE PICKER (Trello-style)
+    // ═══════════════════════════════════════════════
+
+    let datePickerState = { year: 0, month: 0 };
+
+    function showDatePicker(btn, cardId) {
+        closePopovers();
+        const card = currentModal;
+        const now = new Date();
+        let selectedDate = null;
+        let selectedTime = '';
+
+        if (card.due_date) {
+            selectedDate = new Date(card.due_date.replace(' ', 'T'));
+            let h = selectedDate.getHours(), m = selectedDate.getMinutes();
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            selectedTime = h + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
+            datePickerState.year = selectedDate.getFullYear();
+            datePickerState.month = selectedDate.getMonth();
+        } else {
+            datePickerState.year = now.getFullYear();
+            datePickerState.month = now.getMonth();
+        }
+
+        const html = buildDatePickerHTML(cardId, selectedDate, selectedTime);
+        positionPopover(btn, html);
+    }
+
+    function buildDatePickerHTML(cardId, selectedDate, selectedTime) {
+        const year = datePickerState.year;
+        const month = datePickerState.month;
+        const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        let html = '<div class="cwds-popover cwds-date-popover">';
+        html += '<div class="cwds-popover-title">Dates</div>';
+        html += '<button class="cwds-popover-close" onclick="cwdsKanbanApp.closePopovers()">' + ICONS.x + '</button>';
+
+        // Month navigation
+        html += '<div class="cwds-cal-nav">';
+        html += '<button onclick="cwdsKanbanApp.calNav(-1,' + cardId + ')" class="cwds-cal-nav-btn">‹</button>';
+        html += '<span class="cwds-cal-month">' + months[month] + ' ' + year + '</span>';
+        html += '<button onclick="cwdsKanbanApp.calNav(1,' + cardId + ')" class="cwds-cal-nav-btn">›</button>';
+        html += '</div>';
+
+        // Day headers
+        html += '<div class="cwds-cal-grid">';
+        const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+        for (const d of days) {
+            html += '<div class="cwds-cal-day-header">' + d + '</div>';
+        }
+
+        // Calendar days
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const prevDays = new Date(year, month, 0).getDate();
+
+        // Previous month trailing days
+        for (let i = firstDay - 1; i >= 0; i--) {
+            html += '<div class="cwds-cal-day cwds-cal-day-dim">' + (prevDays - i) + '</div>';
+        }
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const thisDate = new Date(year, month, d);
+            thisDate.setHours(0,0,0,0);
+            const isToday = thisDate.getTime() === today.getTime();
+            const isSelected = selectedDate && thisDate.getFullYear() === selectedDate.getFullYear() && thisDate.getMonth() === selectedDate.getMonth() && thisDate.getDate() === selectedDate.getDate();
+            let cls = 'cwds-cal-day';
+            if (isToday) cls += ' cwds-cal-today';
+            if (isSelected) cls += ' cwds-cal-selected';
+            html += '<div class="' + cls + '" onclick="cwdsKanbanApp.selectCalDay(' + d + ',' + cardId + ')">' + d + '</div>';
+        }
+
+        // Next month leading days
+        const totalCells = firstDay + daysInMonth;
+        const remaining = (7 - (totalCells % 7)) % 7;
+        for (let i = 1; i <= remaining; i++) {
+            html += '<div class="cwds-cal-day cwds-cal-day-dim">' + i + '</div>';
+        }
+        html += '</div>'; // end grid
+
+        // Due date section
+        html += '<div class="cwds-date-section">';
+        html += '<div class="cwds-date-label">Due date</div>';
+        html += '<div class="cwds-date-inputs">';
+
+        const dateVal = selectedDate ? (selectedDate.getMonth() + 1) + '/' + selectedDate.getDate() + '/' + selectedDate.getFullYear() : '';
+        const timeVal = selectedTime || '12:00 PM';
+
+        html += '<input type="text" class="cwds-date-input" id="cwds-date-val" value="' + dateVal + '" placeholder="M/D/YYYY">';
+        html += '<input type="text" class="cwds-time-input" id="cwds-time-val" value="' + timeVal + '" placeholder="12:00 PM">';
+        html += '</div></div>';
+
+        // Save / Remove buttons
+        html += '<button class="cwds-btn cwds-btn-primary cwds-date-save-btn" onclick="cwdsKanbanApp.saveDueDate(' + cardId + ')">Save</button>';
+        if (selectedDate) {
+            html += '<button class="cwds-btn cwds-btn-ghost cwds-date-remove-btn" onclick="cwdsKanbanApp.removeDueDate(' + cardId + ')">Remove</button>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function calNav(dir, cardId) {
+        datePickerState.month += dir;
+        if (datePickerState.month > 11) { datePickerState.month = 0; datePickerState.year++; }
+        if (datePickerState.month < 0) { datePickerState.month = 11; datePickerState.year--; }
+
+        // Get current selected date from input
+        const dateInput = document.getElementById('cwds-date-val');
+        const timeInput = document.getElementById('cwds-time-val');
+        let selDate = null, selTime = timeInput ? timeInput.value : '12:00 PM';
+        if (dateInput && dateInput.value) {
+            const parts = dateInput.value.split('/');
+            if (parts.length === 3) selDate = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+        }
+
+        // Re-render popover in place
+        const popover = document.querySelector('.cwds-date-popover');
+        if (popover) {
+            const closeBtn = popover.querySelector('.cwds-popover-close');
+            const newHtml = buildDatePickerHTML(cardId, selDate, selTime);
+            const tmp = document.createElement('div');
+            tmp.innerHTML = newHtml;
+            const newPopover = tmp.firstChild;
+            // Preserve position
+            newPopover.style.position = popover.style.position;
+            newPopover.style.top = popover.style.top;
+            newPopover.style.left = popover.style.left;
+            newPopover.style.zIndex = popover.style.zIndex;
+            popover.replaceWith(newPopover);
+        }
+    }
+
+    function selectCalDay(day, cardId) {
+        const dateInput = document.getElementById('cwds-date-val');
+        if (dateInput) {
+            dateInput.value = (datePickerState.month + 1) + '/' + day + '/' + datePickerState.year;
+        }
+        // Update calendar highlight
+        document.querySelectorAll('.cwds-cal-day').forEach(el => el.classList.remove('cwds-cal-selected'));
+        event.target.classList.add('cwds-cal-selected');
+    }
+
+    async function saveDueDate(cardId) {
+        const dateInput = document.getElementById('cwds-date-val');
+        const timeInput = document.getElementById('cwds-time-val');
+        if (!dateInput || !dateInput.value) return;
+
+        const parts = dateInput.value.split('/');
+        if (parts.length !== 3) { alert('Enter date as M/D/YYYY'); return; }
+
+        let timeStr = timeInput ? timeInput.value.trim() : '12:00 PM';
+        // Parse time
+        const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+        let hours = 12, mins = 0;
+        if (timeMatch) {
+            hours = parseInt(timeMatch[1]);
+            mins = parseInt(timeMatch[2]);
+            if (timeMatch[3]) {
+                const ampm = timeMatch[3].toUpperCase();
+                if (ampm === 'PM' && hours < 12) hours += 12;
+                if (ampm === 'AM' && hours === 12) hours = 0;
+            }
+        }
+
+        const y = parseInt(parts[2]), m = parseInt(parts[0]) - 1, d = parseInt(parts[1]);
+        const dt = new Date(y, m, d, hours, mins);
+        const isoStr = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0') + ' ' + String(hours).padStart(2, '0') + ':' + String(mins).padStart(2, '0') + ':00';
+
+        try {
+            await apiPut('cards/' + cardId, { due_date: isoStr });
+            if (currentModal) currentModal.due_date = isoStr;
+            closePopovers();
+            // Refresh modal
+            const card = await apiGet('cards/' + cardId);
+            currentModal = card;
+            renderModal(document.querySelector('.cwds-modal'), card);
+        } catch (err) {
+            console.error('Save due date failed:', err);
+        }
+    }
+
+    async function removeDueDate(cardId) {
+        try {
+            await apiPut('cards/' + cardId, { due_date: null });
+            if (currentModal) currentModal.due_date = null;
+            closePopovers();
+            const card = await apiGet('cards/' + cardId);
+            currentModal = card;
+            renderModal(document.querySelector('.cwds-modal'), card);
+        } catch (err) {
+            console.error('Remove due date failed:', err);
         }
     }
 
@@ -1104,6 +1326,14 @@
         html += '<div class="cwds-card-menu-item" onclick="cwdsKanbanApp.shareCard(' + cardId + ')">';
         html += '<div class="cwds-card-menu-icon">' + ICONS.share + '</div>';
         html += '<span>Share</span></div>';
+
+        // Watch toggle
+        const isWatching = card.is_watching;
+        html += '<div class="cwds-card-menu-item" onclick="cwdsKanbanApp.toggleWatch(' + cardId + ')">';
+        html += '<div class="cwds-card-menu-icon">' + ICONS.watch + '</div>';
+        html += '<span>Watch</span>';
+        if (isWatching) html += '<span class="cwds-watch-badge">' + ICONS.check + '</span>';
+        html += '</div>';
 
         html += '<hr class="cwds-card-menu-sep">';
 
@@ -1188,6 +1418,89 @@
             });
         } else {
             prompt('Copy this link:', url);
+        }
+    }
+
+    // ═══════════════════════════════════════════════
+    // WATCH / NOTIFICATION PREFERENCES
+    // ═══════════════════════════════════════════════
+
+    async function toggleWatch(cardId) {
+        closePopovers();
+        try {
+            const result = await apiPost('cards/' + cardId + '/watch', {});
+            if (currentModal) currentModal.is_watching = result.watching;
+            showSavedConfirmation();
+            // Update the modal top bar watch icon
+            const watchBtn = document.getElementById('cwds-watch-indicator');
+            if (watchBtn) {
+                watchBtn.classList.toggle('cwds-watching', result.watching);
+                watchBtn.title = result.watching ? 'Watching (click to unwatch)' : 'Watch this card';
+            }
+        } catch (err) {
+            console.error('Toggle watch failed:', err);
+            if (err.message && err.message.includes('400')) {
+                alert('Watching is available for board members.');
+            }
+        }
+    }
+
+    function showNotificationPrefs(btn) {
+        closePopovers();
+
+        let html = '<div class="cwds-popover cwds-notif-popover">';
+        html += '<div class="cwds-popover-title">Notification Preferences</div>';
+        html += '<button class="cwds-popover-close" onclick="cwdsKanbanApp.closePopovers()">' + ICONS.x + '</button>';
+        html += '<div class="cwds-notif-loading">Loading...</div>';
+        html += '</div>';
+
+        positionPopover(btn, html);
+
+        // Load preferences
+        apiGet('notifications/preferences').then(function(prefs) {
+            const popover = document.querySelector('.cwds-notif-popover');
+            if (!popover) return;
+
+            let inner = '<div class="cwds-popover-title">Notification Preferences</div>';
+            inner += '<button class="cwds-popover-close" onclick="cwdsKanbanApp.closePopovers()">' + ICONS.x + '</button>';
+            inner += '<p style="font-size:11px;color:var(--cwds-text-dim);margin:0 0 10px;">Choose which email notifications you receive for watched cards.</p>';
+
+            const items = [
+                { key: 'notify_comments', label: 'Comments', val: prefs.notify_comments },
+                { key: 'notify_due_dates', label: 'Due date changes', val: prefs.notify_due_dates },
+                { key: 'notify_assignments', label: 'Member assignments', val: prefs.notify_assignments },
+                { key: 'notify_card_moves', label: 'Card moves', val: prefs.notify_card_moves },
+                { key: 'notify_attachments', label: 'Attachments', val: prefs.notify_attachments }
+            ];
+
+            for (const item of items) {
+                inner += '<label class="cwds-notif-toggle">';
+                inner += '<input type="checkbox" data-pref="' + item.key + '"' + (item.val ? ' checked' : '') + '>';
+                inner += '<span>' + item.label + '</span>';
+                inner += '</label>';
+            }
+
+            inner += '<button class="cwds-btn cwds-btn-primary cwds-btn-sm" style="width:100%;margin-top:10px;" onclick="cwdsKanbanApp.saveNotificationPrefs()">Save</button>';
+            popover.innerHTML = inner;
+        }).catch(function() {
+            const popover = document.querySelector('.cwds-notif-popover');
+            if (popover) popover.innerHTML = '<p style="padding:12px;font-size:11px;color:var(--cwds-danger);">Failed to load preferences.</p>';
+        });
+    }
+
+    async function saveNotificationPrefs() {
+        const checkboxes = document.querySelectorAll('.cwds-notif-popover input[type=checkbox]');
+        const prefs = {};
+        checkboxes.forEach(function(cb) {
+            prefs[cb.dataset.pref] = cb.checked ? 1 : 0;
+        });
+
+        try {
+            await apiPut('notifications/preferences', prefs);
+            closePopovers();
+            showSavedConfirmation();
+        } catch (err) {
+            console.error('Save prefs failed:', err);
         }
     }
 
@@ -1676,8 +1989,11 @@
         cancelDescription,
         execFormat,
         insertLink,
-        updateDueDate,
-        clearDueDate,
+        showDatePicker,
+        calNav,
+        selectCalDay,
+        saveDueDate,
+        removeDueDate,
         toggleComplete,
         deleteCard,
         showCardMenu,
@@ -1698,6 +2014,9 @@
         showMemberPicker,
         filterMembers,
         toggleMember,
+        toggleWatch,
+        showNotificationPrefs,
+        saveNotificationPrefs,
         closePopovers,
         addChecklist,
         addChecklistItem,

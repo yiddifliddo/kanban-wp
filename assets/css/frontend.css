@@ -1019,15 +1019,183 @@
     background: var(--cwds-bg);
 }
 
-.cwds-due-date-input {
-    padding: 6px 10px;
-    background: var(--cwds-white);
+/* ── Due date button ── */
+.cwds-due-date-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: var(--cwds-column-bg);
     border: 1px solid var(--cwds-border);
     border-radius: var(--cwds-radius);
     color: var(--cwds-text);
     font-family: var(--cwds-font);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cwds-due-date-btn:hover {
+    background: var(--cwds-border);
+}
+
+.cwds-due-date-btn svg {
+    width: 12px;
+    height: 12px;
+    opacity: 0.6;
+}
+
+.cwds-due-date-btn.cwds-date-overdue {
+    background: #ffebe6;
+    border-color: var(--cwds-danger);
+    color: var(--cwds-danger);
+}
+
+.cwds-due-date-btn.cwds-date-complete {
+    background: #e4f7e4;
+    border-color: var(--cwds-success);
+    color: #1b7a1b;
+}
+
+/* ── Date Picker Popover (Trello-style) ── */
+.cwds-date-popover {
+    width: 300px;
+    padding: 12px 16px;
+}
+
+.cwds-cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.cwds-cal-month {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cwds-text);
+}
+
+.cwds-cal-nav-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    color: var(--cwds-text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--cwds-font);
+}
+
+.cwds-cal-nav-btn:hover {
+    background: var(--cwds-bg);
+    color: var(--cwds-text);
+}
+
+.cwds-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    margin-bottom: 12px;
+}
+
+.cwds-cal-day-header {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--cwds-text-dim);
+    padding: 4px 0;
+    text-transform: uppercase;
+}
+
+.cwds-cal-day {
+    text-align: center;
     font-size: 12px;
+    padding: 6px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--cwds-text);
+    transition: background 0.1s;
+}
+
+.cwds-cal-day:hover {
+    background: var(--cwds-bg);
+}
+
+.cwds-cal-day-dim {
+    color: var(--cwds-text-dim);
+}
+
+.cwds-cal-today {
+    font-weight: 700;
+    background: var(--cwds-bg);
+    border: 1px solid var(--cwds-border);
+}
+
+.cwds-cal-selected {
+    background: var(--cwds-lime) !important;
+    color: var(--cwds-black) !important;
+    font-weight: 700;
+}
+
+.cwds-date-section {
+    border-top: 1px solid var(--cwds-border);
+    padding-top: 10px;
+    margin-bottom: 10px;
+}
+
+.cwds-date-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--cwds-text-muted);
+    margin-bottom: 6px;
+}
+
+.cwds-date-inputs {
+    display: flex;
+    gap: 6px;
+}
+
+.cwds-date-input,
+.cwds-time-input {
+    padding: 7px 10px;
+    border: 1px solid var(--cwds-border);
+    border-radius: var(--cwds-radius);
+    font-family: var(--cwds-font);
+    font-size: 12px;
+    color: var(--cwds-text);
     outline: none;
+    background: var(--cwds-white);
+}
+
+.cwds-date-input {
+    width: 110px;
+}
+
+.cwds-time-input {
+    width: 90px;
+}
+
+.cwds-date-input:focus,
+.cwds-time-input:focus {
+    border-color: var(--cwds-text-muted);
+}
+
+.cwds-date-save-btn {
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.cwds-date-remove-btn {
+    width: 100%;
+    text-align: center;
 }
 
 /* ── Checklists ── */
@@ -1868,6 +2036,86 @@
     padding: 2px 6px;
     border-radius: 3px;
     font-weight: 600;
+}
+
+/* ── Watch indicator ── */
+.cwds-modal-top-btn.cwds-watching {
+    background: rgba(0, 121, 191, 0.15);
+    color: #0079bf;
+}
+
+.cwds-modal-top-btn.cwds-watching:hover {
+    background: rgba(0, 121, 191, 0.25);
+}
+
+.cwds-watch-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: var(--cwds-success);
+    color: #fff;
+    border-radius: 4px;
+    margin-left: auto;
+}
+
+.cwds-watch-badge svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* ── Notification preferences ── */
+.cwds-notif-prefs-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    color: var(--cwds-text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.15s, color 0.15s;
+}
+
+.cwds-notif-prefs-btn:hover {
+    background: var(--cwds-border);
+    color: var(--cwds-text);
+}
+
+.cwds-notif-prefs-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.cwds-notif-popover {
+    width: 280px;
+}
+
+.cwds-notif-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 4px;
+    font-size: 12px;
+    color: var(--cwds-text);
+    cursor: pointer;
+}
+
+.cwds-notif-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--cwds-success);
+    cursor: pointer;
+}
+
+.cwds-notif-loading {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: var(--cwds-text-dim);
 }
 
 /* ── Saved toast notification ── */

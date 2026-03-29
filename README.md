@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.1.0
+**Version:** 1.1.1
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,14 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.1.1 — Custom Date Picker, Card Watching & Notification Preferences
+- **NEW: Trello-style date picker.** Replaced native datetime-local input with a custom calendar popover: month navigation, clickable day grid, date/time inputs, Save and Remove buttons. Due date shown as a styled button with overdue (red) and complete (green) states.
+- **NEW: Watch cards.** Eye icon in the card modal top bar to toggle watching. Also available in the `...` menu. Watchers receive email notifications when the card changes.
+- **NEW: Email notifications for watched cards.** When a watched card gets a comment, move, or other changes, watchers receive an email (respecting their preferences). Actor who made the change is excluded from notifications.
+- **NEW: Notification preferences.** Gear icon in the board header opens a popover to toggle which notifications you receive: Comments, Due date changes, Member assignments, Card moves, Attachments.
+- **NEW: 2 database tables.** `cwds_kanban_watchers` (card_id, member_id) and `cwds_kanban_notifications` (per-member preference flags). Auto-created on plugin update via dbDelta.
+- **NEW: 3 API endpoints.** `POST /cards/{id}/watch` (toggle), `GET /notifications/preferences`, `PUT /notifications/preferences`.
 
 ### v1.1.0 — Label Delete & Duplicate Prevention
 - **NEW: Delete labels.** Trash icon appears on hover for each label in the picker. Confirms before deleting. Removes label from all cards on the board.
