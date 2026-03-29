@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.0.7
+**Version:** 1.0.8
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,11 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.0.8 — Add Lists & Drag-and-Drop Column Reordering
+- **NEW: "Add another list" button.** Trello-style button after the last column lets you create new lists from the frontend. Click to reveal an inline form with title input and Add/Cancel.
+- **NEW: Drag-and-drop column reordering.** Grab any column by its header and drag to reorder. Uses SortableJS with horizontal dragging. Column order persists via the existing `columns/reorder` API.
+- **NEW: Column drag visual feedback.** Ghost (opacity) and drag (rotation + shadow) states match Trello's feel.
 
 ### v1.0.7 — Rich Text Description Editor
 - **NEW: Rich text editor for card descriptions.** Trello-style toolbar with Bold, Italic, Strikethrough, Bullet list, Numbered list, and Insert link buttons.

@@ -160,11 +160,16 @@
         html += escHtml(auth.name);
         html += '</div></div>';
 
-        html += '<div class="cwds-board">';
+        html += '<div class="cwds-board" id="cwds-board">';
 
         for (const col of columns) {
             html += renderColumn(col);
         }
+
+        // Add another list button
+        html += '<div class="cwds-add-list-wrap">';
+        html += '<button class="cwds-add-list-btn" onclick="cwdsKanbanApp.showAddList(this)">' + ICONS.plus + ' Add another list</button>';
+        html += '</div>';
 
         html += '</div>';
         app.innerHTML = html;
@@ -251,6 +256,7 @@
     // ═══════════════════════════════════════════════
 
     function initDragDrop() {
+        // Card drag-and-drop within and across columns
         const lists = document.querySelectorAll('.cwds-column-cards');
         lists.forEach(list => {
             new Sortable(list, {
@@ -287,6 +293,111 @@
                 }
             });
         });
+
+        // Column drag-and-drop (reorder lists)
+        const board = document.getElementById('cwds-board');
+        if (board) {
+            new Sortable(board, {
+                animation: 200,
+                ghostClass: 'cwds-column-ghost',
+                dragClass: 'cwds-column-drag',
+                handle: '.cwds-column-header',
+                draggable: '.cwds-column',
+                direction: 'horizontal',
+                onEnd: function() {
+                    const order = Array.from(board.querySelectorAll('.cwds-column'))
+                        .map(col => parseInt(col.dataset.columnId));
+
+                    // Update boardData column order
+                    const reordered = [];
+                    for (const id of order) {
+                        const col = boardData.columns.find(c => parseInt(c.id) === id);
+                        if (col) reordered.push(col);
+                    }
+                    boardData.columns = reordered;
+
+                    apiPost('columns/reorder', { order: order })
+                        .catch(err => console.error('Reorder columns failed:', err));
+                }
+            });
+        }
+    }
+
+    // ═══════════════════════════════════════════════
+    // ADD LIST (column)
+    // ═══════════════════════════════════════════════
+
+    function showAddList(btn) {
+        btn.style.display = 'none';
+        const wrap = btn.parentElement;
+        const form = document.createElement('div');
+        form.className = 'cwds-add-list-form';
+        form.innerHTML = '<input type="text" placeholder="Enter list title..." autofocus>'
+            + '<div class="cwds-form-actions">'
+            + '<button class="cwds-btn cwds-btn-primary" onclick="cwdsKanbanApp.submitAddList(this)">Add list</button>'
+            + '<button class="cwds-btn cwds-btn-ghost" onclick="cwdsKanbanApp.cancelAddList(this)">' + ICONS.x + '</button>'
+            + '</div>';
+        wrap.appendChild(form);
+
+        const input = form.querySelector('input');
+        input.focus();
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitAddList(form.querySelector('.cwds-btn-primary'));
+            } else if (e.key === 'Escape') {
+                cancelAddList(form.querySelector('.cwds-btn-ghost'));
+            }
+        });
+    }
+
+    async function submitAddList(btn) {
+        const form = btn.closest('.cwds-add-list-form');
+        const input = form.querySelector('input');
+        const title = input.value.trim();
+        if (!title) return;
+
+        btn.disabled = true;
+        btn.textContent = '...';
+
+        try {
+            const col = await apiPost('columns', {
+                board_id: parseInt(BOARD_ID),
+                title: title
+            });
+
+            // Add to boardData
+            col.cards = [];
+            boardData.columns.push(col);
+
+            // Insert new column before the add-list wrapper
+            const board = document.getElementById('cwds-board');
+            const addWrap = form.closest('.cwds-add-list-wrap');
+            const colEl = document.createElement('div');
+            colEl.innerHTML = renderColumn(col);
+            board.insertBefore(colEl.firstChild, addWrap);
+
+            // Re-init drag-drop to include new column
+            initDragDrop();
+
+            // Reset form
+            input.value = '';
+            input.focus();
+            btn.disabled = false;
+            btn.textContent = 'Add list';
+        } catch (err) {
+            console.error('Add list failed:', err);
+            alert('Failed to add list: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'Add list';
+        }
+    }
+
+    function cancelAddList(btn) {
+        const form = btn.closest('.cwds-add-list-form');
+        const wrap = form.parentElement;
+        form.remove();
+        wrap.querySelector('.cwds-add-list-btn').style.display = '';
     }
 
     // ═══════════════════════════════════════════════
@@ -1374,6 +1485,9 @@
     // ═══════════════════════════════════════════════
 
     window.cwdsKanbanApp = {
+        showAddList,
+        submitAddList,
+        cancelAddList,
         showAddCard,
         submitAddCard,
         cancelAddCard,

@@ -145,6 +145,11 @@
     justify-content: space-between;
     padding: 12px 14px 8px;
     flex-shrink: 0;
+    cursor: grab;
+}
+
+.cwds-column-header:active {
+    cursor: grabbing;
 }
 
 .cwds-column-header h3 {
@@ -359,6 +364,88 @@
 .cwds-add-card-form .cwds-form-actions {
     display: flex;
     gap: 6px;
+}
+
+/* ── Add List (column) ── */
+.cwds-add-list-wrap {
+    min-width: 280px;
+    max-width: 280px;
+    flex-shrink: 0;
+}
+
+.cwds-add-list-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.24);
+    border: none;
+    border-radius: var(--cwds-radius-lg);
+    color: var(--cwds-text-muted);
+    font-family: var(--cwds-font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.cwds-add-list-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    color: var(--cwds-text);
+}
+
+.cwds-add-list-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.cwds-add-list-form {
+    background: var(--cwds-column-bg);
+    border-radius: var(--cwds-radius-lg);
+    padding: 8px;
+}
+
+.cwds-add-list-form input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--cwds-white);
+    border: 2px solid #0079bf;
+    border-radius: var(--cwds-radius);
+    color: var(--cwds-text);
+    font-family: var(--cwds-font);
+    font-size: 13px;
+    font-weight: 500;
+    outline: none;
+    margin-bottom: 6px;
+}
+
+.cwds-add-list-form .cwds-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cwds-add-list-form .cwds-btn-ghost {
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cwds-add-list-form .cwds-btn-ghost svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ── Column drag states ── */
+.cwds-column-ghost {
+    opacity: 0.4;
+}
+
+.cwds-column-drag {
+    transform: rotate(3deg);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
 }
 
 /* ── Buttons ── */
