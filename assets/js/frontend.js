@@ -502,8 +502,37 @@
 
         // Description
         html += '<div class="cwds-modal-section">';
-        html += '<div class="cwds-section-header"><div class="cwds-section-title">' + ICONS.desc + ' Description</div></div>';
-        html += '<textarea class="cwds-card-description" placeholder="Add a more detailed description..." onblur="cwdsKanbanApp.updateDescription(' + card.id + ', this.value)">' + escHtml(card.description || '') + '</textarea>';
+        html += '<div class="cwds-section-header">';
+        html += '<div class="cwds-section-title">' + ICONS.desc + ' Description</div>';
+        if (card.description) {
+            html += '<button class="cwds-btn cwds-btn-ghost cwds-btn-sm" onclick="cwdsKanbanApp.editDescription(' + card.id + ')">Edit</button>';
+        }
+        html += '</div>';
+        if (card.description) {
+            // Show rendered description (read mode)
+            html += '<div class="cwds-desc-display" id="cwds-desc-display" onclick="cwdsKanbanApp.editDescription(' + card.id + ')">' + (card.description || '') + '</div>';
+            // Editor hidden initially
+            html += '<div class="cwds-desc-editor" id="cwds-desc-editor" style="display:none;">';
+        } else {
+            // No description — show editor immediately
+            html += '<div class="cwds-desc-editor" id="cwds-desc-editor">';
+        }
+        html += '<div class="cwds-editor-toolbar" id="cwds-editor-toolbar">';
+        html += '<button type="button" class="cwds-toolbar-btn" onclick="cwdsKanbanApp.execFormat(\'bold\')" title="Bold"><strong>B</strong></button>';
+        html += '<button type="button" class="cwds-toolbar-btn" onclick="cwdsKanbanApp.execFormat(\'italic\')" title="Italic"><em>I</em></button>';
+        html += '<button type="button" class="cwds-toolbar-btn" onclick="cwdsKanbanApp.execFormat(\'strikeThrough\')" title="Strikethrough"><s>S</s></button>';
+        html += '<span class="cwds-toolbar-sep"></span>';
+        html += '<button type="button" class="cwds-toolbar-btn" onclick="cwdsKanbanApp.execFormat(\'insertUnorderedList\')" title="Bullet list">• —</button>';
+        html += '<button type="button" class="cwds-toolbar-btn" onclick="cwdsKanbanApp.execFormat(\'insertOrderedList\')" title="Numbered list">1.</button>';
+        html += '<span class="cwds-toolbar-sep"></span>';
+        html += '<button type="button" class="cwds-toolbar-btn" onclick="cwdsKanbanApp.insertLink()" title="Insert link">' + ICONS.paperclip + '</button>';
+        html += '</div>';
+        html += '<div class="cwds-desc-editable" id="cwds-desc-editable" contenteditable="true" data-placeholder="Add a more detailed description...">' + (card.description || '') + '</div>';
+        html += '<div class="cwds-editor-actions">';
+        html += '<button class="cwds-btn cwds-btn-primary cwds-btn-sm" onclick="cwdsKanbanApp.saveDescription(' + card.id + ')">Save</button>';
+        html += '<button class="cwds-btn cwds-btn-ghost cwds-btn-sm" onclick="cwdsKanbanApp.cancelDescription()">Cancel</button>';
+        html += '</div>';
+        html += '</div>'; // end editor
         html += '</div>';
 
         // Checklists
@@ -729,11 +758,82 @@
         }
     }
 
-    async function updateDescription(cardId, value) {
+    function editDescription(cardId) {
+        const display = document.getElementById('cwds-desc-display');
+        const editor = document.getElementById('cwds-desc-editor');
+        if (display) display.style.display = 'none';
+        if (editor) {
+            editor.style.display = '';
+            const editable = document.getElementById('cwds-desc-editable');
+            if (editable) editable.focus();
+        }
+    }
+
+    async function saveDescription(cardId) {
+        const editable = document.getElementById('cwds-desc-editable');
+        if (!editable) return;
+        const value = editable.innerHTML.trim();
         try {
             await apiPut('cards/' + cardId, { description: value });
+            // Update display and swap back to read mode
+            const display = document.getElementById('cwds-desc-display');
+            const editor = document.getElementById('cwds-desc-editor');
+            if (value) {
+                if (display) {
+                    display.innerHTML = value;
+                    display.style.display = '';
+                } else {
+                    // Create display element if it didn't exist (was empty before)
+                    const section = editor.parentElement;
+                    const div = document.createElement('div');
+                    div.className = 'cwds-desc-display';
+                    div.id = 'cwds-desc-display';
+                    div.innerHTML = value;
+                    div.onclick = function() { editDescription(cardId); };
+                    section.insertBefore(div, editor);
+                    // Also add Edit button if missing
+                    const header = section.querySelector('.cwds-section-header');
+                    if (header && !header.querySelector('.cwds-btn')) {
+                        header.insertAdjacentHTML('beforeend', '<button class="cwds-btn cwds-btn-ghost cwds-btn-sm" onclick="cwdsKanbanApp.editDescription(' + cardId + ')">Edit</button>');
+                    }
+                }
+                editor.style.display = 'none';
+            } else {
+                // Empty description — keep editor visible
+                if (display) display.style.display = 'none';
+            }
+            // Update currentModal
+            if (currentModal) currentModal.description = value;
         } catch (err) {
-            console.error('Update description failed:', err);
+            console.error('Save description failed:', err);
+        }
+    }
+
+    function cancelDescription() {
+        const display = document.getElementById('cwds-desc-display');
+        const editor = document.getElementById('cwds-desc-editor');
+        const editable = document.getElementById('cwds-desc-editable');
+        if (display && display.innerHTML.trim()) {
+            // Revert editor to saved content and show display
+            if (editable) editable.innerHTML = display.innerHTML;
+            display.style.display = '';
+            editor.style.display = 'none';
+        } else {
+            // No saved content — clear editor
+            if (editable) editable.innerHTML = '';
+        }
+    }
+
+    function execFormat(command) {
+        document.execCommand(command, false, null);
+        document.getElementById('cwds-desc-editable')?.focus();
+    }
+
+    function insertLink() {
+        const url = prompt('Enter URL:');
+        if (url) {
+            document.execCommand('createLink', false, url);
+            document.getElementById('cwds-desc-editable')?.focus();
         }
     }
 
@@ -1280,7 +1380,11 @@
         openCard,
         closeModal,
         updateTitle,
-        updateDescription,
+        editDescription,
+        saveDescription,
+        cancelDescription,
+        execFormat,
+        insertLink,
         updateDueDate,
         clearDueDate,
         toggleComplete,

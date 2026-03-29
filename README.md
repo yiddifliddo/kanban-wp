@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.0.6
+**Version:** 1.0.7
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,11 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.0.7 — Rich Text Description Editor
+- **NEW: Rich text editor for card descriptions.** Trello-style toolbar with Bold, Italic, Strikethrough, Bullet list, Numbered list, and Insert link buttons.
+- **NEW: Edit/Save/Cancel workflow.** Description shows as rendered HTML in read mode. Click or press "Edit" to switch to the editor. "Save" persists changes, "Cancel" reverts.
+- **NEW: Clickable links in descriptions.** URLs inserted via the link button render as clickable links in both edit and read modes.
 
 ### v1.0.6 — Trello-Style Card Modal Redesign
 - **NEW: "Add to Card" dropdown.** Trello-style `+ Add` button in the action bar opens a menu with Labels, Dates, Checklist, Members, and Attachment — each with icon and description.
