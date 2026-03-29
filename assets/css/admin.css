@@ -1,0 +1,21 @@
+/* CWDS Kanban - Admin Styles v1.0.0 */
+.cwds-kanban-admin .postbox .hndle {
+    border-bottom: 2px solid #E3FF04;
+}
+
+.cwds-kanban-admin h1 a {
+    text-decoration: none;
+    color: #2271b1;
+    font-size: 14px;
+}
+
+.cwds-kanban-admin .page-title-action {
+    background: #000;
+    color: #E3FF04;
+    border: 1px solid #E3FF04;
+}
+
+.cwds-kanban-admin .page-title-action:hover {
+    background: #E3FF04;
+    color: #000;
+}
