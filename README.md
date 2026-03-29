@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.1.1
+**Version:** 1.1.2
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,9 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.1.2 — Fix Member Toggle
+- **FIX: Member toggle now works reliably.** After adding/removing a member, the full card is reloaded from the API and the modal re-renders with fresh data. The member picker re-opens automatically so you can continue assigning members without closing and re-opening.
 
 ### v1.1.1 — Custom Date Picker, Card Watching & Notification Preferences
 - **NEW: Trello-style date picker.** Replaced native datetime-local input with a custom calendar popover: month navigation, clickable day grid, date/time inputs, Save and Remove buttons. Due date shown as a styled button with overdue (red) and complete (green) states.

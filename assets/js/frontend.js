@@ -1761,23 +1761,16 @@
         try {
             const result = await apiPost('cards/' + cardId + '/members', { member_id: memberId });
 
-            // Update currentModal members
-            if (result.action === 'added') {
-                const member = boardData.members.find(m => parseInt(m.id) === memberId);
-                if (member && currentModal) currentModal.members.push(member);
-            } else if (currentModal) {
-                currentModal.members = currentModal.members.filter(m => parseInt(m.id) !== memberId);
-            }
+            // Reload card fully and re-render modal with member picker open
+            const card = await apiGet('cards/' + cardId);
+            currentModal = card;
+            renderModal(document.querySelector('.cwds-modal'), card);
 
-            // Re-render the member picker in place
-            const popover = document.querySelector('.cwds-member-popover');
-            if (popover) {
-                // Find the button that opened it to re-position
-                const btn = document.querySelector('.cwds-action-btn[onclick*="showMemberPicker"]') || document.querySelector('.cwds-meta-add-btn[onclick*="showMemberPicker"]');
-                if (btn) {
-                    showMemberPicker(btn, cardId);
-                }
-            }
+            // Re-open the member picker after modal re-render
+            setTimeout(function() {
+                const btn = document.querySelector('.cwds-meta-add-btn[onclick*="showMemberPicker"]');
+                if (btn) showMemberPicker(btn, cardId);
+            }, 50);
         } catch (err) {
             console.error('Toggle member failed:', err);
         }
