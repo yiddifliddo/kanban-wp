@@ -1913,13 +1913,8 @@
     justify-content: center;
     border-radius: 4px;
     flex-shrink: 0;
-    opacity: 0;
-    transition: opacity 0.15s, color 0.15s;
+    transition: color 0.15s;
     padding: 0;
-}
-
-.cwds-label-row:hover .cwds-label-delete {
-    opacity: 1;
 }
 
 .cwds-label-delete:hover {
@@ -1928,8 +1923,8 @@
 }
 
 .cwds-label-delete svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
 }
 
 .cwds-create-label-btn {

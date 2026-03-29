@@ -1780,17 +1780,21 @@
         try {
             await apiDelete('labels/' + labelId);
             // Remove from boardData
-            boardData.labels = boardData.labels.filter(l => parseInt(l.id) !== labelId);
+            boardData.labels = boardData.labels.filter(l => parseInt(l.id) !== parseInt(labelId));
             // Remove from currentModal
             if (currentModal) {
-                currentModal.labels = currentModal.labels.filter(l => parseInt(l.id) !== labelId);
+                currentModal.labels = currentModal.labels.filter(l => parseInt(l.id) !== parseInt(labelId));
             }
-            // Re-open the label picker
+            // Refresh the whole modal to reflect label removal
             closePopovers();
-            const labelsBtn = document.querySelector('.cwds-meta-add-btn[onclick*="showLabelPicker"]');
-            if (labelsBtn) showLabelPicker(labelsBtn, cardId);
+            const card = await apiGet('cards/' + cardId);
+            currentModal = card;
+            renderModal(document.querySelector('.cwds-modal'), card);
+            // Also refresh board labels
+            boardData = await apiGet('board/' + BOARD_ID);
         } catch (err) {
             console.error('Delete label failed:', err);
+            alert('Failed to delete label: ' + err.message);
         }
     }
 
