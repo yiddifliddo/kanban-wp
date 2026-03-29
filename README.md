@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.0.8
+**Version:** 1.0.9
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,14 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.0.9 — Card Actions Menu & Save Confirmation
+- **NEW: Card actions menu (`...` button).** Trello-style three-dot menu in the top-right of the card modal with: Move, Copy, Share, and Archive actions.
+- **NEW: Move card.** Opens a popover listing all columns — click to move the card to a different list. Current column is highlighted.
+- **NEW: Copy card.** Creates a duplicate card in the same column with a customizable title.
+- **NEW: Share card.** Copies the board URL to clipboard.
+- **NEW: Archive card.** Replaces the old inline Delete button. Confirms before deleting.
+- **NEW: Save confirmation toast.** After saving a description, a green "Saved" toast appears at the bottom of the screen with a checkmark icon, then auto-dismisses after 2 seconds.
 
 ### v1.0.8 — Add Lists & Drag-and-Drop Column Reordering
 - **NEW: "Add another list" button.** Trello-style button after the last column lets you create new lists from the frontend. Click to reveal an inline form with title input and Add/Cancel.

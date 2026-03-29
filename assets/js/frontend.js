@@ -91,7 +91,13 @@
         x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
         desc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
         download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
-        trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>'
+        trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
+        more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>',
+        move: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>',
+        copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
+        archive: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>',
+        share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
+        saved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
     };
 
     function getInitials(name) {
@@ -547,7 +553,10 @@
             }
         }
 
-        let html = '<button class="cwds-modal-close" onclick="cwdsKanbanApp.closeModal()">' + ICONS.x + '</button>';
+        let html = '<div class="cwds-modal-top-actions">';
+        html += '<button class="cwds-modal-top-btn" onclick="cwdsKanbanApp.showCardMenu(this, ' + card.id + ')" title="More actions">' + ICONS.more + '</button>';
+        html += '<button class="cwds-modal-close" onclick="cwdsKanbanApp.closeModal()">' + ICONS.x + '</button>';
+        html += '</div>';
 
         // ── Two-column layout: Left (card detail) | Right (comments & activity) ──
         html += '<div class="cwds-modal-layout">';
@@ -884,6 +893,14 @@
         const editable = document.getElementById('cwds-desc-editable');
         if (!editable) return;
         const value = editable.innerHTML.trim();
+        const saveBtn = document.querySelector('.cwds-editor-actions .cwds-btn-primary');
+
+        // Show saving state
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+        }
+
         try {
             await apiPut('cards/' + cardId, { description: value });
             // Update display and swap back to read mode
@@ -915,9 +932,33 @@
             }
             // Update currentModal
             if (currentModal) currentModal.description = value;
+
+            // Show saved confirmation
+            showSavedConfirmation();
         } catch (err) {
             console.error('Save description failed:', err);
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
+            }
         }
+    }
+
+    function showSavedConfirmation() {
+        // Remove any existing toast
+        const existing = document.querySelector('.cwds-saved-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'cwds-saved-toast';
+        toast.innerHTML = ICONS.saved + ' Saved';
+        document.body.appendChild(toast);
+
+        // Auto remove after 2s
+        setTimeout(function() {
+            toast.classList.add('cwds-toast-out');
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 2000);
     }
 
     function cancelDescription() {
@@ -1035,6 +1076,118 @@
             closeModal();
         } catch (err) {
             console.error('Delete card failed:', err);
+        }
+    }
+
+    // ═══════════════════════════════════════════════
+    // CARD MENU (... button)
+    // ═══════════════════════════════════════════════
+
+    function showCardMenu(btn, cardId) {
+        closePopovers();
+        const card = currentModal;
+
+        let html = '<div class="cwds-popover cwds-card-menu-popover">';
+        html += '<div class="cwds-popover-title">Card actions</div>';
+        html += '<button class="cwds-popover-close" onclick="cwdsKanbanApp.closePopovers()">' + ICONS.x + '</button>';
+
+        html += '<div class="cwds-card-menu-list">';
+
+        html += '<div class="cwds-card-menu-item" onclick="cwdsKanbanApp.closePopovers();cwdsKanbanApp.showMoveCard(this, ' + cardId + ')">';
+        html += '<div class="cwds-card-menu-icon">' + ICONS.move + '</div>';
+        html += '<span>Move</span></div>';
+
+        html += '<div class="cwds-card-menu-item" onclick="cwdsKanbanApp.copyCard(' + cardId + ')">';
+        html += '<div class="cwds-card-menu-icon">' + ICONS.copy + '</div>';
+        html += '<span>Copy</span></div>';
+
+        html += '<div class="cwds-card-menu-item" onclick="cwdsKanbanApp.shareCard(' + cardId + ')">';
+        html += '<div class="cwds-card-menu-icon">' + ICONS.share + '</div>';
+        html += '<span>Share</span></div>';
+
+        html += '<hr class="cwds-card-menu-sep">';
+
+        html += '<div class="cwds-card-menu-item cwds-card-menu-danger" onclick="cwdsKanbanApp.deleteCard(' + cardId + ')">';
+        html += '<div class="cwds-card-menu-icon">' + ICONS.archive + '</div>';
+        html += '<span>Archive</span></div>';
+
+        html += '</div></div>';
+
+        positionPopover(btn, html);
+    }
+
+    function showMoveCard(btn, cardId) {
+        closePopovers();
+        const card = currentModal;
+
+        let html = '<div class="cwds-popover cwds-move-popover">';
+        html += '<div class="cwds-popover-title">Move card</div>';
+        html += '<button class="cwds-popover-close" onclick="cwdsKanbanApp.closePopovers()">' + ICONS.x + '</button>';
+
+        html += '<div class="cwds-popover-section-label">List</div>';
+        for (const col of boardData.columns) {
+            const isCurrent = col.cards && col.cards.find(c => parseInt(c.id) === parseInt(cardId));
+            html += '<div class="cwds-popover-item' + (isCurrent ? ' cwds-item-current' : '') + '" onclick="cwdsKanbanApp.moveCardToColumn(' + cardId + ',' + col.id + ')">';
+            html += '<span class="cwds-popover-item-name">' + escHtml(col.title) + '</span>';
+            if (isCurrent) html += '<span class="cwds-item-badge">current</span>';
+            html += '</div>';
+        }
+
+        html += '</div>';
+
+        const menuBtn = document.querySelector('.cwds-modal-top-btn');
+        positionPopover(menuBtn || btn, html);
+    }
+
+    async function moveCardToColumn(cardId, columnId) {
+        try {
+            await apiPost('cards/move', {
+                card_id: cardId,
+                column_id: columnId,
+                position: 0,
+                column_cards: {}
+            });
+            closePopovers();
+            // Reload card and board
+            const card = await apiGet('cards/' + cardId);
+            currentModal = card;
+            renderModal(document.querySelector('.cwds-modal'), card);
+            // Refresh board data in background
+            boardData = await apiGet('board/' + BOARD_ID);
+        } catch (err) {
+            console.error('Move card failed:', err);
+        }
+    }
+
+    async function copyCard(cardId) {
+        closePopovers();
+        const card = currentModal;
+        const title = prompt('Card title:', card.title + ' (copy)');
+        if (!title) return;
+
+        try {
+            await apiPost('cards', {
+                board_id: parseInt(BOARD_ID),
+                column_id: parseInt(card.column_id),
+                title: title
+            });
+            // Refresh board
+            boardData = await apiGet('board/' + BOARD_ID);
+            alert('Card copied!');
+        } catch (err) {
+            console.error('Copy card failed:', err);
+        }
+    }
+
+    function shareCard(cardId) {
+        closePopovers();
+        const url = window.location.href;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(function() {
+                alert('Board link copied to clipboard!');
+            });
+        } else {
+            prompt('Copy this link:', url);
         }
     }
 
@@ -1503,6 +1656,11 @@
         clearDueDate,
         toggleComplete,
         deleteCard,
+        showCardMenu,
+        showMoveCard,
+        moveCardToColumn,
+        copyCard,
+        shareCard,
         showAddToCard,
         focusDueDate,
         showLabelPicker,
