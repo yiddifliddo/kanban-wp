@@ -583,6 +583,9 @@
 
         // Close popovers when clicking outside them
         modal.addEventListener('click', function(e) {
+            // If the click target is detached from the DOM (e.g. after popover content swap),
+            // don't close — the popover was just rebuilt
+            if (!document.body.contains(e.target)) return;
             if (!e.target.closest('.cwds-popover') && !e.target.closest('.cwds-action-btn') && !e.target.closest('.cwds-meta-add-btn')) {
                 closePopovers();
             }
