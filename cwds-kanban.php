@@ -3,7 +3,7 @@
  * Plugin Name: CWDS Kanban Board
  * Plugin URI: https://charlestonwebsitestudio.com/
  * Description: Client-facing Kanban project management boards with magic link authentication. No WordPress login required for clients.
- * Version: 1.1.9
+ * Version: 1.2.0
  * Author: Dan Lee
  * Author URI: https://charlestonwebsitestudio.com/
  * License: GPL v2 or later
@@ -12,7 +12,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('CWDS_KANBAN_VERSION', '1.1.9');
+define('CWDS_KANBAN_VERSION', '1.2.0');
 define('CWDS_KANBAN_PATH', plugin_dir_path(__FILE__));
 define('CWDS_KANBAN_URL', plugin_dir_url(__FILE__));
 define('CWDS_KANBAN_BASENAME', plugin_basename(__FILE__));

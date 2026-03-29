@@ -1618,7 +1618,7 @@
             html += '<div class="cwds-label-row" data-label-name="' + escHtml(label.title).toLowerCase() + '">';
             html += '<div class="cwds-label-check" onclick="cwdsKanbanApp.toggleLabel(' + cardId + ',' + label.id + ',this)">' + (isActive ? '✓' : '') + '</div>';
             html += '<div class="cwds-label-pill" style="background:' + escHtml(label.color) + ';" onclick="cwdsKanbanApp.toggleLabel(' + cardId + ',' + label.id + ',this.parentElement.querySelector(\'.cwds-label-check\'))">' + escHtml(label.title || '') + '</div>';
-            html += '<button class="cwds-label-delete" onclick="event.stopPropagation();cwdsKanbanApp.deleteLabel(' + label.id + ',' + cardId + ')" title="Delete label">' + ICONS.trash + '</button>';
+            html += '<button class="cwds-label-delete" data-label-id="' + label.id + '" data-card-id="' + cardId + '" title="Delete label">' + ICONS.trash + '</button>';
             html += '</div>';
         }
         if (!boardData.labels.length) {
@@ -1632,6 +1632,17 @@
         html += '</div>';
 
         positionPopover(btn, html);
+
+        // Attach delete handlers after popover is in the DOM
+        document.querySelectorAll('.cwds-label-delete').forEach(function(delBtn) {
+            delBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                var lid = parseInt(this.dataset.labelId);
+                var cid = parseInt(this.dataset.cardId);
+                deleteLabel(lid, cid);
+            });
+        });
     }
 
     function filterLabels(query) {
