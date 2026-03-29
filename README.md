@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.2.0
+**Version:** 1.2.1
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,9 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.2.1 — Toggle Switches for Notification Preferences
+- **NEW: Visual toggle switches.** Replaced invisible native checkboxes with iOS/Trello-style toggle switches (green when on, grey when off). Each preference shows the label on the left and the toggle on the right with clear on/off state.
 
 ### v1.2.0 — Fix Label Delete (inline onclick replaced with addEventListener)
 - **FIX: Label delete now works.** Replaced inline `onclick` handler with `addEventListener` attached after the popover is inserted into the DOM. The inline `event.stopPropagation()` wasn't firing because the click target was the SVG child element inside the button, and `event` (window.event) isn't reliable in all contexts. Now uses proper `e.stopPropagation()` and `e.preventDefault()` via a real event listener.

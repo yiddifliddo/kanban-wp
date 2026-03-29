@@ -1566,8 +1566,9 @@
 
             for (const item of items) {
                 inner += '<label class="cwds-notif-toggle">';
-                inner += '<input type="checkbox" data-pref="' + item.key + '"' + (item.val ? ' checked' : '') + '>';
-                inner += '<span>' + item.label + '</span>';
+                inner += '<span class="cwds-notif-label">' + item.label + '</span>';
+                inner += '<input type="checkbox" class="cwds-toggle-checkbox" data-pref="' + item.key + '"' + (item.val ? ' checked' : '') + '>';
+                inner += '<span class="cwds-toggle-switch"></span>';
                 inner += '</label>';
             }
 
