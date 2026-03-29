@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.1.6
+**Version:** 1.1.7
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,9 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.1.7 — Retroactive Name Update
+- **NEW: Editing a member name retroactively updates all history.** When you change a member's display name via the admin Edit form, all existing activity log entries, comments, and card created_by fields on that board are updated from the old name to the new name. No more stale WP usernames in the activity feed.
 
 ### v1.1.6 — Fix Card Menu & Notification Prefs Popovers
 - **FIX: Card `...` menu now works.** The modal's click-outside handler was immediately closing the popover because the `...` button class (`cwds-modal-top-btn`) wasn't in the exclusion list. Now excluded alongside action buttons and meta buttons.

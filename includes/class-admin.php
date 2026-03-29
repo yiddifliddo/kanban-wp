@@ -211,6 +211,11 @@ class CWDS_Kanban_Admin {
         $name = sanitize_text_field($_POST['member_name']);
         $email = sanitize_email($_POST['member_email']);
 
+        // Get old name before updating
+        $old_name = $wpdb->get_var($wpdb->prepare(
+            "SELECT name FROM " . CWDS_KANBAN_TABLE_MEMBERS . " WHERE id = %d", $member_id
+        ));
+
         $wpdb->update(
             CWDS_KANBAN_TABLE_MEMBERS,
             array('name' => $name, 'email' => $email),
@@ -218,6 +223,34 @@ class CWDS_Kanban_Admin {
             array('%s', '%s'),
             array('%d')
         );
+
+        // Retroactively update all activity, comments, and cards with old name
+        if ($old_name && $old_name !== $name) {
+            $wpdb->update(
+                CWDS_KANBAN_TABLE_ACTIVITY,
+                array('actor_name' => $name),
+                array('actor_name' => $old_name, 'board_id' => $board_id),
+                array('%s'),
+                array('%s', '%d')
+            );
+
+            $wpdb->update(
+                CWDS_KANBAN_TABLE_COMMENTS,
+                array('author_name' => $name),
+                array('author_name' => $old_name, 'board_id' => $board_id),
+                array('%s'),
+                array('%s', '%d')
+            );
+
+            // Update created_by on cards
+            $wpdb->update(
+                CWDS_KANBAN_TABLE_CARDS,
+                array('created_by' => $name),
+                array('created_by' => $old_name, 'board_id' => $board_id),
+                array('%s'),
+                array('%s', '%d')
+            );
+        }
 
         wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $board_id . '&msg=member_updated'));
         exit;
