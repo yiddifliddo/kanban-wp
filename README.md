@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.1.3
+**Version:** 1.1.4
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,9 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.1.4 — Delete Labels from Admin Backend
+- **NEW: Delete labels from wp-admin.** Each label in the board management page now has an × button. Click it, confirm, and the label is removed from all cards and deleted. Previously labels could only be deleted from the frontend picker.
 
 ### v1.1.3 — Editable Member Identity
 - **NEW: Edit member name and email.** Every member (including admins) now has an "Edit" link in the board management page. Click to show an inline form to change the display name and email. Changes apply to the board only — WordPress account is not affected.

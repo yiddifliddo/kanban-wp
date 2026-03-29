@@ -99,6 +99,13 @@ class CWDS_Kanban_Admin {
             $this->edit_member();
         }
 
+        // Delete label
+        if (isset($_GET['action']) && $_GET['action'] === 'delete_label' && isset($_GET['label_id'])) {
+            if (wp_verify_nonce($_GET['_wpnonce'], 'delete_label_' . $_GET['label_id'])) {
+                $this->delete_label((int) $_GET['label_id']);
+            }
+        }
+
         // Setup page
         if (isset($_POST['cwds_kanban_setup_page']) && wp_verify_nonce($_POST['_wpnonce'], 'cwds_kanban_setup_page')) {
             $this->setup_page();
@@ -176,6 +183,23 @@ class CWDS_Kanban_Admin {
         $this->send_invite($member_id, false);
 
         wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $board_id . '&msg=member_added'));
+        exit;
+    }
+
+    private function delete_label($label_id) {
+        global $wpdb;
+
+        $label = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM " . CWDS_KANBAN_TABLE_LABELS . " WHERE id = %d", $label_id
+        ));
+        if (!$label) return;
+
+        // Remove from all cards
+        $wpdb->delete(CWDS_KANBAN_TABLE_CARD_LABELS, array('label_id' => $label_id), array('%d'));
+        // Delete label
+        $wpdb->delete(CWDS_KANBAN_TABLE_LABELS, array('id' => $label_id), array('%d'));
+
+        wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $label->board_id . '&msg=label_deleted'));
         exit;
     }
 
@@ -407,6 +431,8 @@ class CWDS_Kanban_Admin {
                 <div class="notice notice-success is-dismissible"><p>Invite sent!</p></div>
             <?php elseif ($msg === 'member_updated'): ?>
                 <div class="notice notice-success is-dismissible"><p>Member updated!</p></div>
+            <?php elseif ($msg === 'label_deleted'): ?>
+                <div class="notice notice-success is-dismissible"><p>Label deleted!</p></div>
             <?php elseif ($msg === 'label_added'): ?>
                 <div class="notice notice-success is-dismissible"><p>Label added!</p></div>
             <?php elseif ($msg === 'column_added'): ?>
@@ -474,7 +500,10 @@ class CWDS_Kanban_Admin {
                         <?php if ($labels): ?>
                             <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
                                 <?php foreach ($labels as $label): ?>
-                                    <span style="display:inline-block;padding:4px 12px;border-radius:4px;background:<?php echo esc_attr($label->color); ?>;color:#000;font-size:12px;font-weight:600;"><?php echo esc_html($label->title); ?></span>
+                                    <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 8px 4px 12px;border-radius:4px;background:<?php echo esc_attr($label->color); ?>;color:#000;font-size:12px;font-weight:600;">
+                                        <?php echo esc_html($label->title); ?>
+                                        <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=cwds-kanban&action=delete_label&label_id=' . $label->id), 'delete_label_' . $label->id); ?>" onclick="return confirm('Delete this label? It will be removed from all cards.')" style="color:#666;text-decoration:none;font-size:14px;line-height:1;" title="Delete label">&times;</a>
+                                    </span>
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
