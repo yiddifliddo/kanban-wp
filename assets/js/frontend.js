@@ -1618,7 +1618,7 @@
             html += '<div class="cwds-label-row" data-label-name="' + escHtml(label.title).toLowerCase() + '">';
             html += '<div class="cwds-label-check" onclick="cwdsKanbanApp.toggleLabel(' + cardId + ',' + label.id + ',this)">' + (isActive ? '✓' : '') + '</div>';
             html += '<div class="cwds-label-pill" style="background:' + escHtml(label.color) + ';" onclick="cwdsKanbanApp.toggleLabel(' + cardId + ',' + label.id + ',this.parentElement.querySelector(\'.cwds-label-check\'))">' + escHtml(label.title || '') + '</div>';
-            html += '<button class="cwds-label-delete" onclick="cwdsKanbanApp.deleteLabel(' + label.id + ',' + cardId + ')" title="Delete label">' + ICONS.trash + '</button>';
+            html += '<button class="cwds-label-delete" onclick="event.stopPropagation();cwdsKanbanApp.deleteLabel(' + label.id + ',' + cardId + ')" title="Delete label">' + ICONS.trash + '</button>';
             html += '</div>';
         }
         if (!boardData.labels.length) {

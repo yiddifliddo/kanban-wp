@@ -224,12 +224,28 @@ class CWDS_Kanban_Admin {
             array('%d')
         );
 
-        // Retroactively update all activity, comments, and cards with old name
-        if ($old_name && $old_name !== $name) {
+        // Retroactively update all activity, comments, and cards
+        // Update records matching the old member name
+        $names_to_replace = array($old_name);
+
+        // Also check the WP admin display name (may differ from member name)
+        if (current_user_can('manage_options')) {
+            $wp_user = wp_get_current_user();
+            if ($wp_user->display_name && !in_array($wp_user->display_name, $names_to_replace)) {
+                $names_to_replace[] = $wp_user->display_name;
+            }
+            if ($wp_user->user_login && !in_array($wp_user->user_login, $names_to_replace)) {
+                $names_to_replace[] = $wp_user->user_login;
+            }
+        }
+
+        foreach ($names_to_replace as $old) {
+            if ($old === $name) continue; // skip if already matches
+
             $wpdb->update(
                 CWDS_KANBAN_TABLE_ACTIVITY,
                 array('actor_name' => $name),
-                array('actor_name' => $old_name, 'board_id' => $board_id),
+                array('actor_name' => $old, 'board_id' => $board_id),
                 array('%s'),
                 array('%s', '%d')
             );
@@ -237,16 +253,15 @@ class CWDS_Kanban_Admin {
             $wpdb->update(
                 CWDS_KANBAN_TABLE_COMMENTS,
                 array('author_name' => $name),
-                array('author_name' => $old_name, 'board_id' => $board_id),
+                array('author_name' => $old, 'board_id' => $board_id),
                 array('%s'),
                 array('%s', '%d')
             );
 
-            // Update created_by on cards
             $wpdb->update(
                 CWDS_KANBAN_TABLE_CARDS,
                 array('created_by' => $name),
-                array('created_by' => $old_name, 'board_id' => $board_id),
+                array('created_by' => $old, 'board_id' => $board_id),
                 array('%s'),
                 array('%s', '%d')
             );

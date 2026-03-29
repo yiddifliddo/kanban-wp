@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.1.7
+**Version:** 1.1.8
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,10 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.1.8 — Fix Name History & Label Delete
+- **FIX: Retroactive name update now catches WP usernames.** When saving a member edit, the system now replaces records matching the old member name AND the WP display_name AND the WP login username. So even if the member was already renamed once, re-saving will catch any remaining "noaua" records left from the original WP account.
+- **FIX: Label delete button now works reliably.** Added `event.stopPropagation()` to the trash icon click to prevent the event from being swallowed by parent handlers.
 
 ### v1.1.7 — Retroactive Name Update
 - **NEW: Editing a member name retroactively updates all history.** When you change a member's display name via the admin Edit form, all existing activity log entries, comments, and card created_by fields on that board are updated from the old name to the new name. No more stale WP usernames in the activity feed.
