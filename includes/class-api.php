@@ -76,6 +76,12 @@ class CWDS_Kanban_API {
             'permission_callback' => '__return_true'
         ));
 
+        register_rest_route($this->namespace, '/labels/(?P<id>\d+)', array(
+            'methods' => 'DELETE',
+            'callback' => array($this, 'delete_label'),
+            'permission_callback' => '__return_true'
+        ));
+
         register_rest_route($this->namespace, '/cards/(?P<card_id>\d+)/labels', array(
             'methods' => 'POST',
             'callback' => array($this, 'toggle_card_label'),
@@ -547,6 +553,15 @@ class CWDS_Kanban_API {
             return new WP_Error('invalid_color', 'Color is required', array('status' => 400));
         }
 
+        // Prevent duplicate labels (same title + color on same board)
+        $existing = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM " . CWDS_KANBAN_TABLE_LABELS . " WHERE board_id = %d AND title = %s AND color = %s",
+            $board_id, $title, $color
+        ));
+        if ($existing) {
+            return new WP_Error('duplicate_label', 'A label with this title and color already exists', array('status' => 409));
+        }
+
         $wpdb->insert(CWDS_KANBAN_TABLE_LABELS, array(
             'board_id' => $board_id,
             'title' => $title,
@@ -561,6 +576,30 @@ class CWDS_Kanban_API {
         );
 
         return rest_ensure_response($new_label);
+    }
+
+    public function delete_label($request) {
+        $auth = $this->authenticate($request);
+        if (is_wp_error($auth)) return $auth;
+
+        global $wpdb;
+        $label_id = (int) $request['id'];
+
+        $label = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM " . CWDS_KANBAN_TABLE_LABELS . " WHERE id = %d", $label_id
+        ));
+
+        if (!$label) return new WP_Error('not_found', 'Label not found', array('status' => 404));
+        if (!$this->verify_board_access($auth, $label->board_id)) {
+            return new WP_Error('forbidden', 'Access denied', array('status' => 403));
+        }
+
+        // Remove from all cards first
+        $wpdb->delete(CWDS_KANBAN_TABLE_CARD_LABELS, array('label_id' => $label_id), array('%d'));
+        // Delete the label
+        $wpdb->delete(CWDS_KANBAN_TABLE_LABELS, array('id' => $label_id), array('%d'));
+
+        return rest_ensure_response(array('success' => true));
     }
 
     public function toggle_card_label($request) {

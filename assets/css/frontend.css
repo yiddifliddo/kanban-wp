@@ -1630,6 +1630,37 @@
     opacity: 0.85;
 }
 
+.cwds-label-delete {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    color: var(--cwds-text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    padding: 0;
+}
+
+.cwds-label-row:hover .cwds-label-delete {
+    opacity: 1;
+}
+
+.cwds-label-delete:hover {
+    color: var(--cwds-danger);
+    background: rgba(235, 90, 70, 0.08);
+}
+
+.cwds-label-delete svg {
+    width: 12px;
+    height: 12px;
+}
+
 .cwds-create-label-btn {
     width: 100%;
     padding: 8px;

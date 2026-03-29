@@ -1213,7 +1213,8 @@
             const isActive = cardLabelIds.includes(label.id);
             html += '<div class="cwds-label-row" data-label-name="' + escHtml(label.title).toLowerCase() + '">';
             html += '<div class="cwds-label-check" onclick="cwdsKanbanApp.toggleLabel(' + cardId + ',' + label.id + ',this)">' + (isActive ? '✓' : '') + '</div>';
-            html += '<div class="cwds-label-pill" style="background:' + escHtml(label.color) + ';" onclick="cwdsKanbanApp.toggleLabel(' + cardId + ',' + label.id + ',this.previousElementSibling)">' + escHtml(label.title || '') + '</div>';
+            html += '<div class="cwds-label-pill" style="background:' + escHtml(label.color) + ';" onclick="cwdsKanbanApp.toggleLabel(' + cardId + ',' + label.id + ',this.parentElement.querySelector(\'.cwds-label-check\'))">' + escHtml(label.title || '') + '</div>';
+            html += '<button class="cwds-label-delete" onclick="cwdsKanbanApp.deleteLabel(' + label.id + ',' + cardId + ')" title="Delete label">' + ICONS.trash + '</button>';
             html += '</div>';
         }
         if (!boardData.labels.length) {
@@ -1338,7 +1339,11 @@
             renderModal(document.querySelector('.cwds-modal'), card);
         } catch (err) {
             console.error('Create label failed:', err);
-            alert('Failed to create label: ' + err.message);
+            if (err.message && err.message.includes('409')) {
+                alert('A label with this title and color already exists.');
+            } else {
+                alert('Failed to create label: ' + err.message);
+            }
         }
     }
 
@@ -1363,6 +1368,25 @@
             }
         } catch (err) {
             console.error('Toggle label failed:', err);
+        }
+    }
+
+    async function deleteLabel(labelId, cardId) {
+        if (!confirm('Delete this label from the board? It will be removed from all cards.')) return;
+        try {
+            await apiDelete('labels/' + labelId);
+            // Remove from boardData
+            boardData.labels = boardData.labels.filter(l => parseInt(l.id) !== labelId);
+            // Remove from currentModal
+            if (currentModal) {
+                currentModal.labels = currentModal.labels.filter(l => parseInt(l.id) !== labelId);
+            }
+            // Re-open the label picker
+            closePopovers();
+            const labelsBtn = document.querySelector('.cwds-meta-add-btn[onclick*="showLabelPicker"]');
+            if (labelsBtn) showLabelPicker(labelsBtn, cardId);
+        } catch (err) {
+            console.error('Delete label failed:', err);
         }
     }
 
@@ -1670,6 +1694,7 @@
         backToLabels,
         createLabel,
         toggleLabel,
+        deleteLabel,
         showMemberPicker,
         filterMembers,
         toggleMember,

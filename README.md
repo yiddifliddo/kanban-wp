@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.0.9
+**Version:** 1.1.0
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,11 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.1.0 — Label Delete & Duplicate Prevention
+- **NEW: Delete labels.** Trash icon appears on hover for each label in the picker. Confirms before deleting. Removes label from all cards on the board.
+- **NEW: `DELETE /labels/{id}` API endpoint.** Cleans up card-label associations before deleting the label.
+- **FIX: Duplicate label prevention.** API now returns 409 if a label with the same title and color already exists on the board. Frontend shows a friendly error message.
 
 ### v1.0.9 — Card Actions Menu & Save Confirmation
 - **NEW: Card actions menu (`...` button).** Trello-style three-dot menu in the top-right of the card modal with: Move, Copy, Share, and Archive actions.
