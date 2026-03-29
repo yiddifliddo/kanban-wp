@@ -28,6 +28,24 @@ class CWDS_Kanban_API {
         return (int) $auth->board_id === (int) $board_id;
     }
 
+    /**
+     * Resolve admin identity for a specific board (use custom name/email from members table if set)
+     */
+    private function resolve_admin_identity(&$auth, $board_id) {
+        if ($auth->type !== 'admin' || !$board_id) return;
+
+        global $wpdb;
+        $member = $wpdb->get_row($wpdb->prepare(
+            "SELECT id, name, email FROM " . CWDS_KANBAN_TABLE_MEMBERS . " WHERE board_id = %d AND role = 'admin' LIMIT 1",
+            $board_id
+        ));
+        if ($member) {
+            $auth->name = $member->name;
+            $auth->email = $member->email;
+            $auth->member_id = (int) $member->id;
+        }
+    }
+
     public function register_routes() {
 
         // ── Board Data (full board load) ──
@@ -169,6 +187,7 @@ class CWDS_Kanban_API {
 
         global $wpdb;
         $board_id = (int) $request['id'];
+        $this->resolve_admin_identity($auth, $board_id);
 
         if (!$this->verify_board_access($auth, $board_id)) {
             return new WP_Error('forbidden', 'Access denied', array('status' => 403));

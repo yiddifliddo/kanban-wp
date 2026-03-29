@@ -94,6 +94,11 @@ class CWDS_Kanban_Admin {
             $this->add_column();
         }
 
+        // Edit member
+        if (isset($_POST['cwds_kanban_edit_member']) && wp_verify_nonce($_POST['_wpnonce'], 'cwds_kanban_edit_member')) {
+            $this->edit_member();
+        }
+
         // Setup page
         if (isset($_POST['cwds_kanban_setup_page']) && wp_verify_nonce($_POST['_wpnonce'], 'cwds_kanban_setup_page')) {
             $this->setup_page();
@@ -171,6 +176,26 @@ class CWDS_Kanban_Admin {
         $this->send_invite($member_id, false);
 
         wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $board_id . '&msg=member_added'));
+        exit;
+    }
+
+    private function edit_member() {
+        global $wpdb;
+
+        $member_id = (int) $_POST['member_id'];
+        $board_id = (int) $_POST['board_id'];
+        $name = sanitize_text_field($_POST['member_name']);
+        $email = sanitize_email($_POST['member_email']);
+
+        $wpdb->update(
+            CWDS_KANBAN_TABLE_MEMBERS,
+            array('name' => $name, 'email' => $email),
+            array('id' => $member_id),
+            array('%s', '%s'),
+            array('%d')
+        );
+
+        wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $board_id . '&msg=member_updated'));
         exit;
     }
 
@@ -380,6 +405,8 @@ class CWDS_Kanban_Admin {
                 <div class="notice notice-success is-dismissible"><p>Member added and invite sent!</p></div>
             <?php elseif ($msg === 'invite_sent'): ?>
                 <div class="notice notice-success is-dismissible"><p>Invite sent!</p></div>
+            <?php elseif ($msg === 'member_updated'): ?>
+                <div class="notice notice-success is-dismissible"><p>Member updated!</p></div>
             <?php elseif ($msg === 'label_added'): ?>
                 <div class="notice notice-success is-dismissible"><p>Label added!</p></div>
             <?php elseif ($msg === 'column_added'): ?>
@@ -398,15 +425,30 @@ class CWDS_Kanban_Admin {
                             <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
                             <tbody>
                                 <?php foreach ($members as $member): ?>
-                                    <tr>
+                                    <tr id="member-row-<?php echo $member->id; ?>">
                                         <td><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:<?php echo esc_attr($member->avatar_color); ?>;margin-right:6px;vertical-align:middle;"></span><?php echo esc_html($member->name); ?></td>
                                         <td><?php echo esc_html($member->email); ?></td>
                                         <td><?php echo esc_html(ucfirst($member->role)); ?></td>
                                         <td>
+                                            <a href="#" onclick="document.getElementById('edit-member-<?php echo $member->id; ?>').style.display='table-row';this.closest('tr').style.display='none';return false;">Edit</a>
                                             <?php if ($member->role === 'client'): ?>
-                                                <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=cwds-kanban&action=send_invite&member_id=' . $member->id), 'send_invite_' . $member->id); ?>">Resend Invite</a>
-                                            <?php else: ?>
-                                                —
+                                                | <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=cwds-kanban&action=send_invite&member_id=' . $member->id), 'send_invite_' . $member->id); ?>">Resend Invite</a>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                    <tr id="edit-member-<?php echo $member->id; ?>" style="display:none;background:#f9f9f9;">
+                                        <td colspan="4">
+                                            <form method="post" style="display:flex;gap:8px;align-items:end;padding:4px 0;">
+                                                <?php wp_nonce_field('cwds_kanban_edit_member'); ?>
+                                                <input type="hidden" name="member_id" value="<?php echo $member->id; ?>">
+                                                <input type="hidden" name="board_id" value="<?php echo $board_id; ?>">
+                                                <div><label style="font-size:11px;">Display Name</label><br><input type="text" name="member_name" value="<?php echo esc_attr($member->name); ?>" required style="width:160px;"></div>
+                                                <div><label style="font-size:11px;">Email</label><br><input type="email" name="member_email" value="<?php echo esc_attr($member->email); ?>" required style="width:200px;"></div>
+                                                <button type="submit" name="cwds_kanban_edit_member" class="button button-primary">Save</button>
+                                                <a href="#" class="button" onclick="document.getElementById('edit-member-<?php echo $member->id; ?>').style.display='none';document.getElementById('member-row-<?php echo $member->id; ?>').style.display='';return false;">Cancel</a>
+                                            </form>
+                                            <?php if ($member->role === 'admin'): ?>
+                                                <p class="description" style="margin:4px 0 0;font-size:11px;">This changes your display name and email on the board only. It does not affect your WordPress account.</p>
                                             <?php endif; ?>
                                         </td>
                                     </tr>

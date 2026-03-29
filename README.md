@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.1.2
+**Version:** 1.1.3
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,11 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.1.3 — Editable Member Identity
+- **NEW: Edit member name and email.** Every member (including admins) now has an "Edit" link in the board management page. Click to show an inline form to change the display name and email. Changes apply to the board only — WordPress account is not affected.
+- **NEW: Admin identity override.** When an admin accesses a board, the API resolves their custom display name from the members table instead of exposing the WordPress admin username. This prevents leaking the WP admin account name on the board.
+- **NOTE:** A help text appears for admin members: "This changes your display name and email on the board only. It does not affect your WordPress account."
 
 ### v1.1.2 — Fix Member Toggle
 - **FIX: Member toggle now works reliably.** After adding/removing a member, the full card is reloaded from the API and the modal re-renders with fresh data. The member picker re-opens automatically so you can continue assigning members without closing and re-opening.
