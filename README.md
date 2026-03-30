@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.2.3
+**Version:** 1.2.4
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,9 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.2.4 — Fix "No member profile found" for Admin Prefs
+- **FIX: Admin notification prefs save.** The `get_member_id()` lookup was only searching by WP email, which fails when the admin has changed their board email (e.g. to `hello@charlestonwebsitestudio.com`). Now falls back to finding the first admin-role member record.
 
 ### v1.2.3 — Fix Notification Preferences Save for Admins
 - **FIX: Notification prefs now save for admin users.** The API was rejecting admin users because they didn't have a `member_id` in the auth context. New `get_member_id()` helper resolves the admin's member record by email. Preferences now persist correctly.

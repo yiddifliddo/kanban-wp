@@ -1163,14 +1163,22 @@ class CWDS_Kanban_API {
             return (int) $auth->member_id;
         }
 
-        // Admin without member_id — look up by email
+        // Admin without member_id — look up by role, then by WP email
         if ($auth->type === 'admin') {
             global $wpdb;
             $user = wp_get_current_user();
+
+            // Try WP email first
             $member_id = $wpdb->get_var($wpdb->prepare(
                 "SELECT id FROM " . CWDS_KANBAN_TABLE_MEMBERS . " WHERE email = %s AND role = 'admin' LIMIT 1",
                 $user->user_email
             ));
+            if ($member_id) return (int) $member_id;
+
+            // Try by custom board email (member email may have been changed)
+            $member_id = $wpdb->get_var(
+                "SELECT id FROM " . CWDS_KANBAN_TABLE_MEMBERS . " WHERE role = 'admin' ORDER BY id ASC LIMIT 1"
+            );
             if ($member_id) return (int) $member_id;
         }
 
