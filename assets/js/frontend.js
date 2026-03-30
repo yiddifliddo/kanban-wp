@@ -174,6 +174,9 @@
 
         let html = '<div class="cwds-board-header">';
         html += '<h2>' + escHtml(board.title) + '</h2>';
+        if (board.logo_url) {
+            html += '<div class="cwds-board-logo"><img src="' + escHtml(board.logo_url) + '" alt="' + escHtml(board.title) + '"></div>';
+        }
         html += '<div class="cwds-user-badge">';
         html += '<button class="cwds-notif-prefs-btn" onclick="cwdsKanbanApp.showNotificationPrefs(this)" title="Notification preferences">' + ICONS.settings + '</button>';
         html += '<div class="cwds-user-avatar" style="background:var(--cwds-lime);">' + getInitials(auth.name) + '</div>';

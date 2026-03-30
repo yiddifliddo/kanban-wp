@@ -99,6 +99,18 @@ class CWDS_Kanban_Admin {
             $this->edit_member();
         }
 
+        // Upload board logo
+        if (isset($_POST['cwds_kanban_upload_logo']) && wp_verify_nonce($_POST['_wpnonce'], 'cwds_kanban_upload_logo')) {
+            $this->upload_logo();
+        }
+
+        // Remove board logo
+        if (isset($_GET['action']) && $_GET['action'] === 'remove_logo' && isset($_GET['board_id'])) {
+            if (wp_verify_nonce($_GET['_wpnonce'], 'remove_logo_' . $_GET['board_id'])) {
+                $this->remove_logo((int) $_GET['board_id']);
+            }
+        }
+
         // Delete label
         if (isset($_GET['action']) && $_GET['action'] === 'delete_label' && isset($_GET['label_id'])) {
             if (wp_verify_nonce($_GET['_wpnonce'], 'delete_label_' . $_GET['label_id'])) {
@@ -183,6 +195,54 @@ class CWDS_Kanban_Admin {
         $this->send_invite($member_id, false);
 
         wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $board_id . '&msg=member_added'));
+        exit;
+    }
+
+    private function upload_logo() {
+        global $wpdb;
+        $board_id = (int) $_POST['board_id'];
+
+        if (empty($_FILES['board_logo']) || $_FILES['board_logo']['error'] !== UPLOAD_ERR_OK) {
+            wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $board_id . '&msg=logo_error'));
+            exit;
+        }
+
+        // Use WordPress media handling
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $attachment_id = media_handle_upload('board_logo', 0);
+
+        if (is_wp_error($attachment_id)) {
+            wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $board_id . '&msg=logo_error'));
+            exit;
+        }
+
+        $logo_url = wp_get_attachment_url($attachment_id);
+
+        $wpdb->update(
+            CWDS_KANBAN_TABLE_BOARDS,
+            array('logo_url' => $logo_url),
+            array('id' => $board_id),
+            array('%s'),
+            array('%d')
+        );
+
+        wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $board_id . '&msg=logo_updated'));
+        exit;
+    }
+
+    private function remove_logo($board_id) {
+        global $wpdb;
+        $wpdb->update(
+            CWDS_KANBAN_TABLE_BOARDS,
+            array('logo_url' => null),
+            array('id' => $board_id),
+            array('%s'),
+            array('%d')
+        );
+        wp_redirect(admin_url('admin.php?page=cwds-kanban&action=edit&board_id=' . $board_id . '&msg=logo_removed'));
         exit;
     }
 
@@ -485,9 +545,37 @@ class CWDS_Kanban_Admin {
                 <div class="notice notice-success is-dismissible"><p>Label added!</p></div>
             <?php elseif ($msg === 'column_added'): ?>
                 <div class="notice notice-success is-dismissible"><p>Column added!</p></div>
+            <?php elseif ($msg === 'logo_updated'): ?>
+                <div class="notice notice-success is-dismissible"><p>Board logo updated!</p></div>
+            <?php elseif ($msg === 'logo_removed'): ?>
+                <div class="notice notice-success is-dismissible"><p>Board logo removed!</p></div>
+            <?php elseif ($msg === 'logo_error'): ?>
+                <div class="notice notice-error is-dismissible"><p>Failed to upload logo. Please try again.</p></div>
             <?php endif; ?>
 
             <p>Board URL: <a href="<?php echo esc_url($board_url); ?>" target="_blank"><code><?php echo esc_url($board_url); ?></code></a> (admin view) &nbsp; <a href="<?php echo esc_url($board_url); ?>" target="_blank" class="button">View Board &rarr;</a></p>
+
+            <!-- Board Logo -->
+            <div class="postbox" style="max-width:600px;margin-top:10px;">
+                <h2 class="hndle" style="padding: 12px;">Board Logo</h2>
+                <div class="inside">
+                    <p class="description">Upload a logo to display centered in the board header. It will be resized to fit within 500×500px with a white background.</p>
+                    <?php if (!empty($board->logo_url)): ?>
+                        <div style="margin:12px 0;padding:16px;background:#fff;border:1px solid #ddd;border-radius:6px;text-align:center;">
+                            <img src="<?php echo esc_url($board->logo_url); ?>" alt="Board logo" style="max-width:200px;max-height:200px;object-fit:contain;">
+                        </div>
+                        <p>
+                            <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=cwds-kanban&action=remove_logo&board_id=' . $board_id), 'remove_logo_' . $board_id); ?>" class="button" onclick="return confirm('Remove this logo?')">Remove Logo</a>
+                        </p>
+                    <?php endif; ?>
+                    <form method="post" enctype="multipart/form-data" style="margin-top:8px;">
+                        <?php wp_nonce_field('cwds_kanban_upload_logo'); ?>
+                        <input type="hidden" name="board_id" value="<?php echo $board_id; ?>">
+                        <input type="file" name="board_logo" accept="image/*" required>
+                        <button type="submit" name="cwds_kanban_upload_logo" class="button button-primary" style="margin-left:8px;">Upload Logo</button>
+                    </form>
+                </div>
+            </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
 

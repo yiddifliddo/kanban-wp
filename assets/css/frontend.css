@@ -76,6 +76,27 @@
     background: var(--cwds-white);
     border-radius: var(--cwds-radius-lg) var(--cwds-radius-lg) 0 0;
     border-bottom: 2px solid var(--cwds-lime);
+    position: relative;
+}
+
+.cwds-board-logo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 500px;
+    max-height: 500px;
+    background: var(--cwds-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.cwds-board-logo img {
+    max-width: 100%;
+    max-height: 60px;
+    object-fit: contain;
 }
 
 .cwds-board-header h2 {
