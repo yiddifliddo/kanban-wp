@@ -1094,13 +1094,15 @@ class CWDS_Kanban_API {
     public function get_notification_prefs($request) {
         $auth = $this->authenticate($request);
         if (is_wp_error($auth)) return $auth;
-        if ($auth->type !== 'client' || !isset($auth->member_id)) {
+
+        $member_id = $this->get_member_id($auth);
+        if (!$member_id) {
             return rest_ensure_response(array('notify_comments' => 1, 'notify_due_dates' => 1, 'notify_assignments' => 1, 'notify_card_moves' => 1, 'notify_attachments' => 0));
         }
 
         global $wpdb;
         $prefs = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM " . CWDS_KANBAN_TABLE_NOTIFICATIONS . " WHERE member_id = %d", $auth->member_id
+            "SELECT * FROM " . CWDS_KANBAN_TABLE_NOTIFICATIONS . " WHERE member_id = %d", $member_id
         ));
 
         if (!$prefs) {
@@ -1122,13 +1124,14 @@ class CWDS_Kanban_API {
     public function update_notification_prefs($request) {
         $auth = $this->authenticate($request);
         if (is_wp_error($auth)) return $auth;
-        if ($auth->type !== 'client' || !isset($auth->member_id)) {
-            return new WP_Error('not_supported', 'Preferences are for board members', array('status' => 400));
+
+        $member_id = $this->get_member_id($auth);
+        if (!$member_id) {
+            return new WP_Error('not_supported', 'No member profile found', array('status' => 400));
         }
 
         global $wpdb;
         $params = $request->get_json_params();
-        $member_id = (int) $auth->member_id;
 
         $data = array(
             'member_id' => $member_id,
@@ -1150,6 +1153,28 @@ class CWDS_Kanban_API {
         }
 
         return rest_ensure_response(array('success' => true));
+    }
+
+    /**
+     * Helper: Get member_id for any auth context (admin or client)
+     */
+    private function get_member_id($auth) {
+        if (isset($auth->member_id) && $auth->member_id) {
+            return (int) $auth->member_id;
+        }
+
+        // Admin without member_id — look up by email
+        if ($auth->type === 'admin') {
+            global $wpdb;
+            $user = wp_get_current_user();
+            $member_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM " . CWDS_KANBAN_TABLE_MEMBERS . " WHERE email = %s AND role = 'admin' LIMIT 1",
+                $user->user_email
+            ));
+            if ($member_id) return (int) $member_id;
+        }
+
+        return 0;
     }
 
     /**

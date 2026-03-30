@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.2.2
+**Version:** 1.2.3
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,10 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.2.3 — Fix Notification Preferences Save for Admins
+- **FIX: Notification prefs now save for admin users.** The API was rejecting admin users because they didn't have a `member_id` in the auth context. New `get_member_id()` helper resolves the admin's member record by email. Preferences now persist correctly.
+- **FIX: Save confirmation.** Button shows "Saving..." during the API call. Green "Saved" toast appears on success. Error alert on failure with the specific error message.
 
 ### v1.2.2 — Board Logo
 - **NEW: Board logo.** Upload a logo per board in wp-admin (Manage board > Board Logo section). The logo displays centered in the frontend board header bar between the board title and user badge. Fits within 500×500px with white background, maintaining aspect ratio. Upload, preview, and remove from the admin panel.

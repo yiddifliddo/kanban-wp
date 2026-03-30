@@ -1590,12 +1590,17 @@
             prefs[cb.dataset.pref] = cb.checked ? 1 : 0;
         });
 
+        const saveBtn = document.querySelector('.cwds-notif-popover .cwds-btn-primary');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
         try {
             await apiPut('notifications/preferences', prefs);
             closePopovers();
             showSavedConfirmation();
         } catch (err) {
             console.error('Save prefs failed:', err);
+            alert('Failed to save preferences: ' + err.message);
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
         }
     }
 
