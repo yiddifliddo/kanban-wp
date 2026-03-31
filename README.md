@@ -1,6 +1,6 @@
 # CWDS Kanban Board Plugin
 
-**Version:** 1.2.4
+**Version:** 1.2.5
 **Author:** Dan Lee  
 **Website:** [charlestonwebsitestudio.com](https://charlestonwebsitestudio.com/)
 
@@ -9,6 +9,10 @@
 Client-facing Kanban project management boards for WordPress. Trello-style light UI with CWDS brand accents. Magic link auth — no WordPress login required for clients.
 
 ## Changelog
+
+### v1.2.5 — Fix Admin Name in ALL API Actions
+- **FIX: Admin custom name now used everywhere.** Moved admin identity resolution into the `authenticate()` method itself, so EVERY API call (create card, update card, move card, add comment, etc.) uses the custom board display name instead of the WP username. Previously only `get_board` resolved the name — all other actions still logged "noaua". Now all new activity will show "Dan Lee".
+- **NOTE:** To fix old activity records, go to wp-admin > Kanban Boards > Manage board > Edit your member > Save. This triggers the retroactive name update.
 
 ### v1.2.4 — Fix "No member profile found" for Admin Prefs
 - **FIX: Admin notification prefs save.** The `get_member_id()` lookup was only searching by WP email, which fails when the admin has changed their board email (e.g. to `hello@charlestonwebsitestudio.com`). Now falls back to finding the first admin-role member record.

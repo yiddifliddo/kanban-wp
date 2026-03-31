@@ -17,6 +17,29 @@ class CWDS_Kanban_API {
         if (!$auth) {
             return new WP_Error('unauthorized', 'Authentication required', array('status' => 401));
         }
+
+        // For admin users, resolve custom display name from members table
+        if ($auth->type === 'admin') {
+            global $wpdb;
+            $user = wp_get_current_user();
+
+            // Find admin member record — try WP email first, then any admin role
+            $member = $wpdb->get_row($wpdb->prepare(
+                "SELECT id, name, email FROM " . CWDS_KANBAN_TABLE_MEMBERS . " WHERE email = %s AND role = 'admin' LIMIT 1",
+                $user->user_email
+            ));
+            if (!$member) {
+                $member = $wpdb->get_row(
+                    "SELECT id, name, email FROM " . CWDS_KANBAN_TABLE_MEMBERS . " WHERE role = 'admin' ORDER BY id ASC LIMIT 1"
+                );
+            }
+            if ($member) {
+                $auth->name = $member->name;
+                $auth->email = $member->email;
+                $auth->member_id = (int) $member->id;
+            }
+        }
+
         return $auth;
     }
 
@@ -193,7 +216,6 @@ class CWDS_Kanban_API {
 
         global $wpdb;
         $board_id = (int) $request['id'];
-        $this->resolve_admin_identity($auth, $board_id);
 
         if (!$this->verify_board_access($auth, $board_id)) {
             return new WP_Error('forbidden', 'Access denied', array('status' => 403));
